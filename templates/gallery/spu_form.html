@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="container-xl">
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+                                                <div class="col">
+                <h2 class="page-title">{{ title }}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        请检查下面的错误
+                                                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">SPU编码</label>
+                        {{ form.spu_code }}
+                        {% if form.spu_code.errors %}
+                            <div class="invalid-feedback d-block">{{ form.spu_code.errors.0 }}</div>
+                        {% endif %}
+                                                </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">SPU名称</label>
+                        {{ form.spu_name }}
+                        {% if form.spu_name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.spu_name.errors.0 }}</div>
+                        {% endif %}
+                                            </div>
+                                        </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label required">产品类型</label>
+                        {{ form.product_type }}
+                        {% if form.product_type.errors %}
+                            <div class="invalid-feedback d-block">{{ form.product_type.errors.0 }}</div>
+                        {% endif %}
+                                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">销售渠道</label>
+                        {{ form.sales_channel }}
+                        {% if form.sales_channel.errors %}
+                            <div class="invalid-feedback d-block">{{ form.sales_channel.errors.0 }}</div>
+                        {% endif %}
+                                </div>
+                            </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">品牌</label>
+                        {{ form.brand }}
+                        {% if form.brand.errors %}
+                            <div class="invalid-feedback d-block">{{ form.brand.errors.0 }}</div>
+                        {% endif %}
+                        </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label required">类目</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">专员</label>
+                        {{ form.poc }}
+                        {% if form.poc.errors %}
+                            <div class="invalid-feedback d-block">{{ form.poc.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">备注</label>
+                    {{ form.spu_remark }}
+                    {% if form.spu_remark.errors %}
+                        <div class="invalid-feedback">{{ form.spu_remark.errors.0 }}</div>
+                    {% endif %}
+                    </div>
+
+                <div class="mb-3">
+                    <label class="form-check">
+                        {{ form.status }}
+                        <span class="form-check-label">启用状态</span>
+                    </label>
+                </div>
+
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <a href="{% url 'gallery:spu_list' %}" class="btn btn-link">返回</a>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

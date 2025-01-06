@@ -1,0 +1,123 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="page-header d-print-none">
+        <div class="container-xl">
+            <div class="row g-2 align-items-center">
+                <div class="col">
+                    <h2 class="page-title">
+                        {% if sku %}编辑SKU{% else %}创建SKU{% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-body">
+        <div class="container-xl">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">SKU编码</label>
+                                    {{ form.sku_code }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">SKU名称</label>
+                                    {{ form.sku_name }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">所属SPU</label>
+                            {{ form.spu }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">材质</label>
+                                    {{ form.material }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">颜色</label>
+                                    {{ form.color }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">电镀工艺</label>
+                                    {{ form.plating_process }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">表面处理</label>
+                                    {{ form.surface_treatment }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">重量(g)</label>
+                                    {{ form.weight }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">长(mm)</label>
+                                    {{ form.length }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">宽(mm)</label>
+                                    {{ form.width }}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label class="form-label">高(mm)</label>
+                                    {{ form.height }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">其他尺寸</label>
+                            {{ form.other_dimensions }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">供应商列表</label>
+                            {{ form.suppliers_list }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">图片URL</label>
+                            {{ form.img_url }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-check form-switch">
+                                {{ form.status }}
+                                <span class="form-check-label">启用状态</span>
+                            </label>
+                        </div>
+                        <div class="form-footer">
+                            <button type="submit" class="btn btn-primary">保存</button>
+                            <a href="{% url 'gallery:sku_list' %}" class="btn btn-link">返回</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

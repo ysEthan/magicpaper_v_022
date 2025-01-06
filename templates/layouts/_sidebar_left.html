@@ -1,0 +1,116 @@
+<aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
+                aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="nav-item dropdown text-center mt-4">
+            {% if user.is_authenticated %}
+                <a href="#" class="nav-link d-flex lh-1 text-reset p-0 align-items-center justify-content-center" data-bs-toggle="dropdown" aria-label="Open user menu">
+                    <div class="text-center">
+                        {% load static %}
+                        <span class="avatar avatar-lg mb-2" style="background-color: #206bc4">
+                            <img src="{% static 'avatars/044m.jpg' %}" alt="">
+                        </span>
+
+                        <div class="d-none d-xl-block">
+                            <div>{{ user.username }}</div>
+                        </div>
+                    </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                    <a href="{% url 'muggle:profile' %}" class="dropdown-item">个人资料</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'muggle:logout' %}" class="dropdown-item">退出登录</a>
+                </div>
+            {% else %}
+                <a href="{% url 'muggle:login' %}" class="nav-link d-flex lh-1 text-reset p-0 align-items-center justify-content-center">
+                    <div class="text-center">
+                        <span class="avatar avatar-lg mb-2" style="background-color: #626976">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
+                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
+                            </svg>
+                        </span>
+                        <div class="d-none d-xl-block">
+                            <div>未登录</div>
+                        </div>
+                    </div>
+                </a>
+            {% endif %}
+        </div>
+        <div class="collapse navbar-collapse" id="sidebar-menu">
+            <ul class="navbar-nav pt-lg-3">
+                {% include 'layouts/_sidebar_left_ul/_dashboard.html' %}
+                {% include 'layouts/_sidebar_left_ul/_gallery.html' %}
+                {% include 'layouts/_sidebar_left_ul/_storage.html' %}
+                {% include 'layouts/_sidebar_left_ul/_procurement.html' %}
+                {% include 'layouts/_sidebar_left_ul/_extra.html' %}
+                {% include 'layouts/_sidebar_left_ul/_layout.html' %}
+                {% include 'layouts/_sidebar_left_ul/_icons.html' %}
+                {% include 'layouts/_sidebar_left_ul/_email.html' %}
+                {% include 'layouts/_sidebar_left_ul/_help.html' %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#navbar-base" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button" aria-expanded="false">
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-shopping-cart" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M6 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                <path d="M17 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                <path d="M17 17h-11v-14h-2" />
+                                <path d="M6 5l14 1l-1 7h-13" />
+                            </svg>
+                        </span>
+                        <span class="nav-link-title">
+                            商品管理
+                        </span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-menu-columns">
+                            <div class="dropdown-menu-column">
+                                <a class="dropdown-item {% if active_menu == 'category' %}active{% endif %}" href="{% url 'gallery:category_list' %}">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-category" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                            <path d="M4 4h6v6h-6z" />
+                                            <path d="M14 4h6v6h-6z" />
+                                            <path d="M4 14h6v6h-6z" />
+                                            <path d="M14 14h6v6h-6z" />
+                                        </svg>
+                                    </span>
+                                    类目管理
+                                </a>
+                                <a class="dropdown-item {% if active_menu == 'spu' %}active{% endif %}" href="{% url 'gallery:spu_list' %}">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-box" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                            <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" />
+                                            <path d="M12 12l8 -4.5" />
+                                            <path d="M12 12l0 9" />
+                                            <path d="M12 12l-8 -4.5" />
+                                        </svg>
+                                    </span>
+                                    SPU管理
+                                </a>
+                                <a class="dropdown-item {% if active_menu == 'sku' %}active{% endif %}" href="{% url 'gallery:sku_list' %}">
+                                    <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-package" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                            <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" />
+                                            <path d="M12 12l8 -4.5" />
+                                            <path d="M12 12l0 9" />
+                                            <path d="M12 12l-8 -4.5" />
+                                            <path d="M16 5.25l-8 4.5" />
+                                        </svg>
+                                    </span>
+                                    SKU管理
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</aside>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>{% block title %}{% endblock %}</title>
+    {% load static %}
+    <!-- CSS files -->
+    <link href="{% static 'css/tabler.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/tabler-flags.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/tabler-payments.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/tabler-vendors.min.css' %}" rel="stylesheet"/>
+    {% block extra_css %}{% endblock %}
+    <style>
+        .form-label.required:after {
+            content: " *";
+            color: red;
+        }
+        .invalid-feedback.d-block {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        {% include "includes/sidebar.html" %}
+        <div class="page-wrapper">
+            {% include "includes/header.html" %}
+            {% block content %}{% endblock %}
+            {% include "includes/footer.html" %}
+        </div>
+    </div>
+    <!-- Tabler Core -->
+    <script src="{% static 'js/tabler.min.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

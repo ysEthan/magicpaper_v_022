@@ -1,0 +1,61 @@
+<div class="col-md-2">
+    <div class="mb-3">
+        <select class="form-select {% if form.material.errors %}is-invalid{% endif %}" name="material" required>
+            <option value="">选择材质</option>
+            <option value="铜" {% if form.material.value == "铜" %}selected{% endif %}>铜</option>
+            <option value="铁" {% if form.material.value == "铁" %}selected{% endif %}>铁</option>
+            <option value="锌合金" {% if form.material.value == "锌合金" %}selected{% endif %}>锌合金</option>
+            <option value="塑料" {% if form.material.value == "塑料" %}selected{% endif %}>塑料</option>
+            <option value="其他" {% if form.material.value == "其他" %}selected{% endif %}>其他</option>
+        </select>
+        {% if form.material.errors %}
+            <div class="invalid-feedback">{{ form.material.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="mb-3">
+        <select class="form-select {% if form.color.errors %}is-invalid{% endif %}" name="color" required>
+            <option value="">选择颜色</option>
+            <option value="金色" {% if form.color.value == "金色" %}selected{% endif %}>金色</option>
+            <option value="银色" {% if form.color.value == "银色" %}selected{% endif %}>银色</option>
+            <option value="黑色" {% if form.color.value == "黑色" %}selected{% endif %}>黑色</option>
+            <option value="白色" {% if form.color.value == "白色" %}selected{% endif %}>白色</option>
+            <option value="其他" {% if form.color.value == "其他" %}selected{% endif %}>其他</option>
+        </select>
+        {% if form.color.errors %}
+            <div class="invalid-feedback">{{ form.color.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="mb-3">
+        <select class="form-select {% if form.plating_process.errors %}is-invalid{% endif %}" name="plating_process" required>
+            <option value="">电镀工艺</option>
+            <option value="none" {% if form.plating_process.value == "none" %}selected{% endif %}>无电镀</option>
+            <option value="gold" {% if form.plating_process.value == "gold" %}selected{% endif %}>镀金</option>
+            <option value="silver" {% if form.plating_process.value == "silver" %}selected{% endif %}>镀银</option>
+            <option value="nickel" {% if form.plating_process.value == "nickel" %}selected{% endif %}>镀镍</option>
+            <option value="chrome" {% if form.plating_process.value == "chrome" %}selected{% endif %}>镀铬</option>
+            <option value="copper" {% if form.plating_process.value == "copper" %}selected{% endif %}>镀铜</option>
+            <option value="other" {% if form.plating_process.value == "other" %}selected{% endif %}>其他</option>
+        </select>
+        {% if form.plating_process.errors %}
+            <div class="invalid-feedback">{{ form.plating_process.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="mb-3">
+        <input type="text" class="form-control {% if form.surface_treatment.errors %}is-invalid{% endif %}"
+               name="surface_treatment" placeholder="表面处理" value="{{ form.surface_treatment.value|default:'' }}">
+        {% if form.surface_treatment.errors %}
+            <div class="invalid-feedback">{{ form.surface_treatment.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 其他材质和工艺字段... --> 

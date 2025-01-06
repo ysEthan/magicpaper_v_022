@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-xl">
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{{ title }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <p>确定要删除SPU "{{ object.spu_name }}" ({{ object.spu_code }}) 吗？</p>
+                {% if object.skus.exists %}
+                <div class="alert alert-warning">
+                    <h4 class="alert-title">警告</h4>
+                    <div class="text-muted">该SPU下有关联的SKU，删除可能会影响到这些数据。</div>
+                </div>
+                {% endif %}
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                    <a href="{% url 'gallery:spu_list' %}" class="btn btn-link">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,97 @@
+<script>
+// SPU选择相关的JavaScript代码
+document.addEventListener('DOMContentLoaded', function() {
+    const spuSelectionRadios = document.querySelectorAll('input[name="spu_selection"]');
+    const newSpuCode = document.getElementById('newSpuCode');
+    const spuSearch = document.getElementById('spuSearch');
+    const spuInputs = document.querySelectorAll('#spuName, #productTypeSelect, #salesChannelSelect, #brandSelect, #pocSelect, #spuRemark');
+    const datalist = document.getElementById('datalistOptions');
+    const spuHiddenInput = document.getElementById('spuHiddenInput');
+    
+    // 获取最新的SPU ID并生成新的SPU编码
+    let nextSpuId = 1;
+    if (datalist.options.length > 0) {
+        const allIds = Array.from(datalist.options).map(option => 
+            parseInt(option.dataset.id)
+        );
+        nextSpuId = Math.max(...allIds) + 1;
+    }
+    const generatedSpuCode = `SPU${String(nextSpuId).padStart(6, '0')}`;
+    newSpuCode.value = generatedSpuCode;
+    
+    // 存储所有SPU选项的数据
+    const spuOptions = [];
+    for (const option of datalist.options) {
+        spuOptions.push({
+            value: option.value,
+            id: option.dataset.id,
+            productType: option.dataset.productType,
+            salesChannel: option.dataset.salesChannel,
+            brand: option.dataset.brand,
+            poc: option.dataset.poc
+        });
+    }
+    
+    // 处理SPU选择
+    function handleSPUSelection(value) {
+        const selectedSPU = spuOptions.find(spu => spu.value === value);
+        
+        if (selectedSPU) {
+            spuHiddenInput.value = selectedSPU.id;
+            document.getElementById('productTypeSelect').value = selectedSPU.productType || '';
+            document.getElementById('salesChannelSelect').value = selectedSPU.salesChannel || '';
+            document.getElementById('brandSelect').value = selectedSPU.brand || '';
+            document.getElementById('pocSelect').value = selectedSPU.poc || '';
+            
+            // 禁用所有SPU相关输入框
+            spuInputs.forEach(input => {
+                input.disabled = true;
+            });
+        }
+    }
+    
+    // 监听单选按钮变化
+    spuSelectionRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'create') {
+                // 显示新建SPU输入框，隐藏搜索框
+                newSpuCode.style.display = 'block';
+                spuSearch.style.display = 'none';
+                spuHiddenInput.value = '';
+                
+                // 启用所有SPU相关输入框
+                spuInputs.forEach(input => {
+                    input.disabled = false;
+                    input.value = '';  // 清空输入值
+                });
+            } else {
+                // 显示搜索框，隐藏新建SPU输入框
+                newSpuCode.style.display = 'none';
+                spuSearch.style.display = 'block';
+                spuSearch.value = '';
+                
+                // 禁用所有SPU相关输入框
+                spuInputs.forEach(input => {
+                    input.disabled = true;
+                    input.value = '';  // 清空输入值
+                });
+            }
+        });
+    });
+    
+    // 初始化时触发一次选中状态的处理
+    const selectedRadio = document.querySelector('input[name="spu_selection"]:checked');
+    if (selectedRadio) {
+        selectedRadio.dispatchEvent(new Event('change'));
+    }
+    
+    // 监听搜索框事件
+    spuSearch.addEventListener('input', function(e) {
+        handleSPUSelection(e.target.value);
+    });
+    
+    spuSearch.addEventListener('change', function(e) {
+        handleSPUSelection(e.target.value);
+    });
+});
+</script> 

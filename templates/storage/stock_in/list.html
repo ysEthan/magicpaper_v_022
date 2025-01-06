@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}入库记录{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">入库记录</h2>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <button type="button" class="btn btn-primary" onclick="syncStockIn()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-refresh" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                        </svg>
+                        同步入库单
+                    </button>
+                    <a href="{% url 'storage:stock_in_create' %}" class="btn btn-primary d-none d-sm-inline-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        创建入库单
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索表单 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">仓库</label>
+                    <select name="warehouse" class="form-select">
+                        <option value="">全部仓库</option>
+                        {% for w in warehouses %}
+                        <option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:"i" %}selected{% endif %}>
+                            {{ w.warehouse_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">入库单号</label>
+                    <input type="text" class="form-control" name="stock_in_code" value="{{ stock_in_code }}" placeholder="入库单号">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">开始日期</label>
+                    <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">结束日期</label>
+                    <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <circle cx="10" cy="10" r="7" />
+                            <line x1="21" y1="21" x2="15" y2="15" />
+                        </svg>
+                        搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 入库记录列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>入库单号</th>
+                            <th>仓库</th>
+                            <th>SKU</th>
+                            <th>入库类型</th>
+                            <th>数量</th>
+                            <th>来源单号</th>
+                            <th>操作人</th>
+                            <th>入库时间</th>
+                            <th class="w-1"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock_in in stock_ins %}
+                        <tr>
+                            <td>{{ stock_in.stock_in_code }}</td>
+                            <td>{{ stock_in.warehouse.warehouse_name }}</td>
+                            <td>{{ stock_in.sku.sku_code }}</td>
+                            <td>{{ stock_in.get_stock_in_type_display }}</td>
+                            <td>{{ stock_in.quantity }}</td>
+                            <td>{{ stock_in.source_order|default:"-" }}</td>
+                            <td>{{ stock_in.operator.get_full_name|default:stock_in.operator.username }}</td>
+                            <td>{{ stock_in.stock_in_time|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <div class="btn-list flex-nowrap">
+                                    <a href="#" class="btn btn-white btn-sm" data-bs-toggle="modal" data-bs-target="#modal-stock-in-detail-{{ stock_in.id }}">
+                                        详情
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 入库详情模态框 -->
+                        <div class="modal modal-blur fade" id="modal-stock-in-detail-{{ stock_in.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">入库详情</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="datagrid mb-3">
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">入库单号</div>
+                                                <div class="datagrid-content">{{ stock_in.stock_in_code }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">入库类型</div>
+                                                <div class="datagrid-content">{{ stock_in.get_stock_in_type_display }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">仓库</div>
+                                                <div class="datagrid-content">{{ stock_in.warehouse.warehouse_name }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">来源单号</div>
+                                                <div class="datagrid-content">{{ stock_in.source_order|default:"-" }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">SKU编码</div>
+                                                <div class="datagrid-content">{{ stock_in.sku.sku_code }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">SKU名称</div>
+                                                <div class="datagrid-content">{{ stock_in.sku.sku_name }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">入库数量</div>
+                                                <div class="datagrid-content">{{ stock_in.quantity }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">操作人</div>
+                                                <div class="datagrid-content">{{ stock_in.operator.get_full_name|default:stock_in.operator.username }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">入库时间</div>
+                                                <div class="datagrid-content">{{ stock_in.stock_in_time|date:"Y-m-d H:i:s" }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">创建时间</div>
+                                                <div class="datagrid-content">{{ stock_in.created_at|date:"Y-m-d H:i:s" }}</div>
+                                            </div>
+                                        </div>
+
+                                        {% if stock_in.remark %}
+                                        <div class="mb-3">
+                                            <label class="form-label">备注</label>
+                                            <div>{{ stock_in.remark }}</div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">关闭</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            {% if stock_ins.has_other_pages %}
+            <div class="card-footer d-flex align-items-center">
+                <p class="m-0 text-muted">
+                    显示第 <span>{{ stock_ins.start_index }}</span> 到第 <span>{{ stock_ins.end_index }}</span> 条
+                    共 <span>{{ stock_ins.paginator.count }}</span> 条
+                </p>
+                <ul class="pagination m-0 ms-auto">
+                    {% if stock_ins.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ stock_ins.previous_page_number }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_in_code %}&stock_in_code={{ stock_in_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <polyline points="15 6 9 12 15 18" />
+                            </svg>
+                            上一页
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in stock_ins.paginator.page_range %}
+                        {% if stock_ins.number == i %}
+                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_in_code %}&stock_in_code={{ stock_in_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if stock_ins.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ stock_ins.next_page_number }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_in_code %}&stock_in_code={{ stock_in_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                            下一页
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <polyline points="9 6 15 12 9 18" />
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function syncStockIn() {
+    if (!confirm('确定要同步旺店通入库单数据吗？')) {
+        return;
+    }
+    
+    // 显示加载提示
+    var button = document.querySelector('button[onclick="syncStockIn()"]');
+    var originalText = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 同步中...';
+    button.disabled = true;
+    
+    // 发送同步请求
+    fetch('{% url "storage:sync_stock_in" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('同步失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('同步失败，请稍后重试');
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+</script>
+{% endblock %} 

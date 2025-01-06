@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+    {% load static %}
+    <style>
+        @import url('https://rsms.me/inter/inter.css');
+
+        :root {
+            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+        }
+
+        body {
+            font-feature-settings: "cv03", "cv04", "cv11";
+        }
+    </style>
+
+    <script src="{% static 'dist/js/demo-theme.min.js' %}"></script>
+
+
+
+    <div class="container-xl">
+    <div class="page-header d-print-none">
+    <!-- Page body -->
+    <div class="page-body">
+    <div class="container-xl">
+        <div class="row row-cards">
+            <div class="col-12">
+                <form action="https://httpbin.org/post" method="post" class="card">
+
+
+                    <div class="card-header">
+                        <h4 class="card-title">Form elements2</h4>
+                    <!-- card-header end  -->
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row col-md-12 col-xl-12 g-5">
+                            <div class="col-xl-12">
+
+
+                                <!-- card-body row_1 start  -->
+                                <div class="row">
+                                    <div class="col-md-12 col-xl-12">
+
+                                        <!-- basic info  -->
+                                        <div class="mb-3">
+                                            <label class="form-label">基础信息</label>
+                                        </div>
+
+                                        <!-- 基础信息输入框  -->
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="name">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="Input placeholder">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="Input placeholder">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                        <!-- 基础信息输入框 第二行  -->
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="code">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="name">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="example-text-input"
+                                                           placeholder="Input placeholder">
+                                                </div>
+                                            </div>
+
+
+                                        </div>
+
+
+
+                                    </div>
+                                <!-- card-body row_2 end  -->
+                                </div>
+
+
+
+                                <!-- card-body row_2 start  -->
+                                <div class="row">
+                                    <div class="col-md-12 col-xl-12">
+
+
+
+
+                                        <!-- spu info  -->
+                                        <div class="mb-3">
+                                            <label class="form-label">SPU信息</label>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" name="example-password-input"
+                                                   placeholder="Input placeholder">
+                                        </div>
+
+
+
+
+
+
+                                    </div>
+                                <!-- card-body row_2 end  -->
+                                </div>
+
+
+
+
+
+                            </div>
+                        </div>
+                    <!-- card-body end  -->
+                    </div>
+
+                    <div class="card-footer text-end">
+                        <div class="d-flex">
+                            <a href="#" class="btn btn-link">Cancel</a>
+                            <button type="submit" class="btn btn-primary ms-auto">Send data</button>
+                        </div>
+                    <!-- card-footer end  -->
+                    </div>
+
+
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,9 @@
+# Default ignored files
+/setting.py
+/*/__pycache__/*.pyc
+# Default ignored files
+/media/*
+/logs/*
+
+
+

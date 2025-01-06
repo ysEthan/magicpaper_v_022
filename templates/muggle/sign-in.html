@@ -1,0 +1,44 @@
+{% extends "layouts/base-auth.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-tight py-4">
+    <div class="text-center mb-4">
+        <a href="." class="navbar-brand navbar-brand-autodark">
+            <img src="{% static './static/logo.svg' %}" height="36" alt="">
+        </a>
+    </div>
+    <form class="card card-md" method="post" action="{% url 'muggle:login' %}">
+        {% csrf_token %}
+        <div class="card-body">
+            <h2 class="card-title text-center mb-4">登录到您的账户</h2>
+            {% if messages %}
+            <div class="alert alert-danger" role="alert">
+                {% for message in messages %}
+                {{ message }}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                <label class="form-label">用户名</label>
+                {{ form.username }}
+            </div>
+            <div class="mb-2">
+                <label class="form-label">
+                    密码
+                    <span class="form-label-description">
+                        <a href="{% url 'muggle:password_reset' %}">忘记密码</a>
+                    </span>
+                </label>
+                {{ form.password }}
+            </div>
+            <div class="form-footer">
+                <button type="submit" class="btn btn-primary w-100">登录</button>
+            </div>
+        </div>
+    </form>
+    <div class="text-center text-muted mt-3">
+        还没有账户? <a href="{% url 'muggle:register' %}" tabindex="-1">注册</a>
+    </div>
+</div>
+{% endblock %} 

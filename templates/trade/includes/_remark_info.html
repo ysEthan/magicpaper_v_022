@@ -1,0 +1,28 @@
+<div class="row g-2">
+    <div class="col-md-4">
+        
+        <input type="text" class="form-control {% if form.buyer_remark.errors %}is-invalid{% endif %}"
+               name="buyer_remark" value="{{ form.buyer_remark.value|default:'' }}" placeholder="买家备注">
+        {% if form.buyer_remark.errors %}
+            <div class="invalid-feedback">{{ form.buyer_remark.errors.0 }}</div>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        
+        <input type="text" class="form-control {% if form.system_remark.errors %}is-invalid{% endif %}"
+               name="system_remark" value="{{ form.system_remark.value|default:'' }}" placeholder="系统备注">
+        {% if form.system_remark.errors %}
+            <div class="invalid-feedback">{{ form.system_remark.errors.0 }}</div>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        
+        <input type="text" class="form-control {% if form.cs_remark.errors %}is-invalid{% endif %}"
+               name="cs_remark" value="{{ form.cs_remark.value|default:'' }}" placeholder="客服备注">
+        {% if form.cs_remark.errors %}
+            <div class="invalid-feedback">{{ form.cs_remark.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}仓库管理{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">仓库管理</h2>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{% url 'storage:warehouse_create' %}" class="btn btn-primary d-none d-sm-inline-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        创建仓库
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索表单 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">搜索</label>
+                    <input type="text" class="form-control" name="search" value="{{ search_query }}" placeholder="仓库编码/名称">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <circle cx="10" cy="10" r="7" />
+                            <line x1="21" y1="21" x2="15" y2="15" />
+                        </svg>
+                        搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 仓库列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>仓库编码</th>
+                            <th>仓库名称</th>
+                            <th>地址</th>
+                            <th>管理员</th>
+                            <th>联系电话</th>
+                            <th>状态</th>
+                            <th class="w-1"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for warehouse in warehouses %}
+                        <tr>
+                            <td>{{ warehouse.warehouse_code }}</td>
+                            <td>
+                                <a href="{% url 'storage:warehouse_detail' warehouse.pk %}">
+                                    {{ warehouse.warehouse_name }}
+                                </a>
+                            </td>
+                            <td>{{ warehouse.location }}</td>
+                            <td>{{ warehouse.manager.get_full_name|default:warehouse.manager.username }}</td>
+                            <td>{{ warehouse.contact_phone|default:"-" }}</td>
+                            <td>
+                                {% if warehouse.status %}
+                                <span class="badge bg-success">启用</span>
+                                {% else %}
+                                <span class="badge bg-danger">禁用</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-list flex-nowrap">
+                                    <a href="{% url 'storage:warehouse_edit' warehouse.pk %}" class="btn btn-white btn-sm">
+                                        编辑
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            {% if warehouses.has_other_pages %}
+            <div class="card-footer d-flex align-items-center">
+                <p class="m-0 text-muted">
+                    显示第 <span>{{ warehouses.start_index }}</span> 到第 <span>{{ warehouses.end_index }}</span> 条
+                    共 <span>{{ warehouses.paginator.count }}</span> 条
+                </p>
+                <ul class="pagination m-0 ms-auto">
+                    {% if warehouses.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ warehouses.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <polyline points="15 6 9 12 15 18" />
+                            </svg>
+                            上一页
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in warehouses.paginator.page_range %}
+                        {% if warehouses.number == i %}
+                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if warehouses.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ warehouses.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                            下一页
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <polyline points="9 6 15 12 9 18" />
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

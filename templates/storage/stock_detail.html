@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>库存详情</h1>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ stock.sku.name }}</h5>
+        <p class="card-text">
+            <strong>仓库：</strong> {{ stock.warehouse }}<br>
+            <strong>库存数量：</strong> {{ stock.stock_num }}<br>
+            <strong>平均成本：</strong> {{ stock.avg_cost }}<br>
+            <strong>创建时间：</strong> {{ stock.created_at }}<br>
+            <strong>更新时间：</strong> {{ stock.updated_at }}
+        </p>
+        <a href="{% url 'storage:stock-update' stock.pk %}" class="btn btn-warning">编辑</a>
+        <a href="{% url 'storage:stock-list' %}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+{% endblock %} 

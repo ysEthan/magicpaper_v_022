@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- 搜索和筛选表单 -->
+                    <form method="get" class="mb-4">
+                        <div class="row align-items-end">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>搜索</label>
+                                    <input type="text" name="search" class="form-control" placeholder="订单号/收件人" value="{{ search_query }}">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>店铺</label>
+                                    <select name="shop" class="form-control">
+                                        <option value="">全部</option>
+                                        {% for shop in shops %}
+                                        <option value="{{ shop.id }}" {% if selected_shop == shop.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ shop.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <label>状态</label>
+                                    <select name="status" class="form-control">
+                                        <option value="">全部</option>
+                                        {% for status_value, status_label in status_choices %}
+                                        <option value="{{ status_value }}" {% if selected_status == status_value %}selected{% endif %}>
+                                            {{ status_label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fas fa-search"></i> 搜索
+                                </button>
+                                <a href="{% url 'trade:order_create' %}" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> 新增订单
+                                </a>
+                                <button type="button" class="btn btn-info" onclick="syncOrders()">
+                                    <i class="fas fa-sync"></i> 同步数据
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- 订单列表 -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 13%">订单信息</th>
+                                    <th style="width: 11%">买家信息</th>
+                                    <th style="width: 13%">备注信息</th>
+                                    <th style="width: 18%">仓配信息</th>
+                                    <th style="width: 6%">支付金额</th>
+                                    <th style="width: 6%">状态</th>
+                                    <th style="width: 8%">创建时间</th>
+                                    <th style="width: 6%">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td style="width: 13%">
+                                        <div class="text-muted">
+                                            <small>Shop: {{ order.shop.name }} ({{ order.get_order_type_display }})</small>
+                                        </div>
+                                        <div class="text-muted" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                            <small>ID: {{ order.id }}</small><br>
+                                            <small>订单号: {{ order.platform_order_no }}</small>
+                                        </div>
+                                    </td>
+                                    <td style="width: 11%; min-width: 160px;">
+                                        <div class="fw-bold">{{ order.recipient_name }}</div>
+                                        <div class="text-muted small" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;">
+                                            {{ order.recipient_country }} {{ order.recipient_state }} {{ order.recipient_city }} {{ order.recipient_address }}
+                                        </div>
+                                        <div class="text-muted small">
+                                            {% with stats=order.get_sku_stats %}
+                                            SKU数: {{ stats.sku_count }} /  件数：{{ stats.total_qty }}
+                                            {% endwith %}
+                                        </div>
+                                    </td>
+                                    <td style="width: 13%">
+                                        <div class="text-muted small">
+                                            {% if order.buyer_remark %}
+                                            <div class="text-muted" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <small>买家: {{ order.buyer_remark }}</small><br>
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if order.system_remark %}
+                                            <div class="text-muted" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <small>系统: {{ order.system_remark }}</small><br>
+                                            </div>
+                                            {% endif %}
+
+                                            {% if order.cs_remark %}
+                                            <div class="text-muted" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <small>客服: {{ order.cs_remark }}</small><br>
+                                            </div>
+                                            {% endif %}
+
+                                            
+                                            {% if not order.buyer_remark and not order.system_remark and not order.cs_remark %}
+                                            <div class="text-center">-</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td style="width: 18%">
+                                        {% if order.package %}
+                                            <div>
+                                                <small>物流: {{ order.package.service.carrier.name_zh }} - {{ order.package.service.service_name }}</small>
+                                            </div>
+                                            <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                <small>单号: {{ order.package.tracking_no|default:"未获取" }}</small>
+                                            </div>
+                                            <div>
+                                                <small>状态:
+                                                    {% if order.package.pkg_status_code == '1' %}
+                                                        <span class="badge badge-success">已发货</span>
+                                                    {% else %}
+                                                        <span class="badge badge-warning">未发货</span>
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">暂无发货信息</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="width: 6%">{{ order.paid_amount }}</td>
+                                    <td style="width: 6%">
+                                        <span class="badge badge-{{ order.status }}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td style="width: 8%">{{ order.created_at|date:"Y-m-d H:i" }}</td>
+
+
+
+
+
+
+
+
+                                    <td class="text-center">
+                                        <div class="dropdown d-inline-block">
+                                            <button class="btn btn-outline-primary dropdown-toggle btn-sm" 
+                                                    data-bs-boundary="viewport" 
+                                                    data-bs-toggle="dropdown" 
+                                                    aria-expanded="false">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                    <path d="M4 6l16 0"></path>
+                                                    <path d="M4 12l16 0"></path>
+                                                    <path d="M4 18l16 0"></path>
+                                                </svg>
+                                                操作
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a class="dropdown-item" href="{% url 'trade:order_detail' order.id %}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-info" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                                                        <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path>
+                                                        <path d="M11 14h1v4h1"></path>
+                                                        <path d="M12 11h.01"></path>
+                                                    </svg>
+                                                    详情
+                                                </a>
+                                                <a class="dropdown-item" href="{% url 'trade:order_edit' order.id %}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-edit" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                        <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"></path>
+                                                        <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"></path>
+                                                        <path d="M16 5l3 3"></path>
+                                                    </svg>
+                                                    编辑
+                                                </a>
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item text-danger" href="#" onclick="deleteOrder('{{ order.id }}'); return false;">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                        <path d="M4 7l16 0"></path>
+                                                        <path d="M10 11l0 6"></path>
+                                                        <path d="M14 11l0 6"></path>
+                                                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                                                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                                                    </svg>
+                                                    删除
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </td>
+
+
+
+
+
+
+
+
+
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">暂无订单数据</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="text-muted">
+                            显示 {{ page_obj.start_index }} - {{ page_obj.end_index }} 条，共 {{ paginator.count }} 条记录
+                        </div>
+                        <ul class="pagination m-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_shop %}&shop={{ selected_shop }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_shop %}&shop={{ selected_shop }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_shop %}&shop={{ selected_shop }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_shop %}&shop={{ selected_shop }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_shop %}&shop={{ selected_shop }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteOrder(orderId) {
+    if (confirm('确定要删除这个订单吗？')) {
+        // 获取CSRF token
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(`{% url 'trade:order_delete' 0 %}`.replace('0', orderId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                // 删除成功后刷新页面
+                window.location.reload();
+            } else {
+                alert('删除失败，请重试');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('删除失败，请重试');
+        });
+    }
+}
+
+function syncOrders() {
+    if (!confirm('确定要同步订单数据吗？这可能需要一些时间。')) {
+        return;
+    }
+
+    const syncButton = document.querySelector('button[onclick="syncOrders()"]');
+    const originalContent = syncButton.innerHTML;
+    syncButton.disabled = true;
+    syncButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同步中...';
+
+    // 获取CSRF token
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch('{% url "trade:order_sync" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'Content-Type': 'application/json'
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('同步成功：' + data.message);
+            window.location.reload();  // 刷新页面显示新数据
+        } else {
+            alert('同步失败：' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('同步失败，请检查网络连接或联系管理员');
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        syncButton.disabled = false;
+        syncButton.innerHTML = originalContent;
+    });
+}
+</script>
+{% endblock %} 

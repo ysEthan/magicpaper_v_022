@@ -1,0 +1,145 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}编辑供应商{% else %}新增供应商{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{% if form.instance.pk %}编辑供应商{% else %}新增供应商{% endif %}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'procurement:supplier_list' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回列表
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="card">
+                    <div class="card-body">
+                        <!-- 供应商名称 -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 联系人 -->
+                        <div class="mb-3">
+                            <label for="{{ form.contact_person.id_for_label }}" class="form-label">{{ form.contact_person.label }}</label>
+                            {{ form.contact_person }}
+                            {% if form.contact_person.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contact_person.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 联系电话 -->
+                        <div class="mb-3">
+                            <label for="{{ form.contact_phone.id_for_label }}" class="form-label">{{ form.contact_phone.label }}</label>
+                            {{ form.contact_phone }}
+                            {% if form.contact_phone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contact_phone.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 地址 -->
+                        <div class="mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.address.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 邮箱 -->
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 状态 -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.status }}
+                                <label class="form-check-label" for="{{ form.status.id_for_label }}">
+                                    {{ form.status.label }}
+                                </label>
+                            </div>
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.status.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 备注 -->
+                        <div class="mb-3">
+                            <label for="{{ form.remark.id_for_label }}" class="form-label">{{ form.remark.label }}</label>
+                            {{ form.remark }}
+                            {% if form.remark.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.remark.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> 保存
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 在这里添加任何需要的CSS样式 */
+    .form-control, .form-select {
+        max-width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 在这里添加表单验证等JavaScript代码
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+</script>
+{% endblock %} 

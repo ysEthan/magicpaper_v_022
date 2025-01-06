@@ -1,0 +1,30 @@
+<div class="row g-2">
+
+    <div class="col-sm-6 col-md-2">
+        
+        <select class="form-select {% if form.order_type.errors %}is-invalid{% endif %}"
+                name="order_type" required>
+            {% for value, label in form.order_type.field.choices %}
+                <option value="{{ value }}" {% if form.order_type.value == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if form.order_type.errors %}
+            <div class="invalid-feedback">{{ form.order_type.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="col-sm-6 col-md-2">
+        
+        <input type="text" class="form-control {% if form.order_no.errors %}is-invalid{% endif %}"
+               name="order_no" value="{{ form.order_no.value|default:'' }}" placeholder="订单号" readonly required>
+        {% if form.order_no.errors %}
+            <div class="invalid-feedback">{{ form.order_no.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <input type="hidden" name="platform_order_no" value="{{ form.platform_order_no.value|default:'' }}">
+    <input type="hidden" name="shop" value="1">
+
+</div>

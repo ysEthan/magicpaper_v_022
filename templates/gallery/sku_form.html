@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+    {% load static %}
+    <style>
+        @import url('static/css/inter.css');
+
+        :root {
+            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+        }
+
+        body {
+            font-feature-settings: "cv03", "cv04", "cv11";
+        }
+    </style>
+
+    <script src="{% static 'dist/js/demo-theme.min.js' %}"></script>
+
+    <div class="container-xl">
+        <div class="page-header d-print-none">
+            <!-- Page body -->
+            <div class="page-body">
+                <div class="container-xl">
+                    <div class="row row-cards">
+                        <div class="col-12">
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                                        <div class="d-flex">
+                                            <div>
+                                                {% if message.tags == 'error' %}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                                                        <path d="M12 8l0 4"></path>
+                                                        <path d="M12 16l.01 0"></path>
+                                                    </svg>
+                                                {% else %}
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                        <path d="M5 12l5 5l10 -10"></path>
+                                                    </svg>
+                                                {% endif %}
+                                            </div>
+                                            <div>{{ message }}</div>
+                                        </div>
+                                        <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+
+                            <form method="post" class="card">
+                                {% csrf_token %}
+
+                                <div class="card-header">
+                                    <h4 class="card-title">新增 SKU</h4>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="row col-md-12 col-xl-12 g-5">
+                                        <div class="col-xl-12">
+                                            <!-- 基础信息部分 -->
+                                            <div class="row">
+                                                <div class="col-md-12 col-xl-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">基础信息</label>
+                                                    </div>
+
+                                                    <!-- SKU基本信息 -->
+                                                    <div class="row g-2">
+                                                        <div class="col-md-3">
+                                                            <div class="mb-3">
+                                                                <input type="text" class="form-control" name="sku_code"
+                                                                       value="{{ generated_sku_code }}" readonly>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <div class="mb-3">
+                                                                <input type="text" class="form-control {% if form.sku_name.errors %}is-invalid{% endif %}"
+                                                                       name="sku_name" placeholder="SKU名称" required
+                                                                       value="{{ form.sku_name.value|default:'' }}">
+                                                                {% if form.sku_name.errors %}
+                                                                    <div class="invalid-feedback">{{ form.sku_name.errors.0 }}</div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- 尺寸信息 -->
+                                                    <div class="row g-2">
+                                                        <!-- 尺寸相关字段 -->
+                                                        {% include "gallery/includes/dimensions_fields.html" %}
+                                                    </div>
+
+                                                    <!-- 材质和工艺信息 -->
+                                                    <div class="row g-2">
+                                                        <!-- 材质和工艺相关字段 -->
+                                                        {% include "gallery/includes/material_fields.html" %}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- SPU信息部分 -->
+                                            <div class="row mt-4">
+                                                <div class="col-md-12 col-xl-12">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">SPU信息</label>
+                                                    </div>
+
+                                                    <!-- SPU选择 -->
+                                                    {% include "gallery/includes/spu_selection.html" %}
+                                                </div>
+                                            </div>
+
+
+
+
+
+
+
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-footer text-end">
+                                    <div class="d-flex">
+                                        <button type="submit" class="btn btn-primary">保存</button>
+                                        <a href="{% url 'gallery:sku_list' %}" class="btn btn-link">返回</a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SPU选择相关的JavaScript -->
+    {% include "gallery/includes/spu_selection_script.html" %}
+{% endblock %} 

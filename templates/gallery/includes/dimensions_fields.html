@@ -1,0 +1,51 @@
+<div class="col-md-2">
+    <div class="mb-3">
+        <input type="number" step="0.01" class="form-control {% if form.weight.errors %}is-invalid{% endif %}"
+               name="weight" placeholder="重量(g)" value="{{ form.weight.value|default:'' }}">
+        {% if form.weight.errors %}
+            <div class="invalid-feedback">{{ form.weight.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="mb-3">
+        <input type="number" class="form-control {% if form.length.errors %}is-invalid{% endif %}"
+               name="length" placeholder="长(mm)" value="{{ form.length.value|default:'' }}">
+        {% if form.length.errors %}
+            <div class="invalid-feedback">{{ form.length.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="mb-3">
+        <input type="number" class="form-control {% if form.width.errors %}is-invalid{% endif %}"
+               name="width" placeholder="宽(mm)" value="{{ form.width.value|default:'' }}">
+        {% if form.width.errors %}
+            <div class="invalid-feedback">{{ form.width.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="mb-3">
+        <input type="number" class="form-control {% if form.height.errors %}is-invalid{% endif %}"
+               name="height" placeholder="高(mm)" value="{{ form.height.value|default:'' }}">
+        {% if form.height.errors %}
+            <div class="invalid-feedback">{{ form.height.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="col-md-4">
+    <div class="mb-3">
+        <input type="text" class="form-control {% if form.other_dimensions.errors %}is-invalid{% endif %}"
+               name="other_dimensions" placeholder="其他尺寸" value="{{ form.other_dimensions.value|default:'' }}">
+        {% if form.other_dimensions.errors %}
+            <div class="invalid-feedback">{{ form.other_dimensions.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 其他尺寸字段... --> 

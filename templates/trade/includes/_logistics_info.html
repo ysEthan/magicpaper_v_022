@@ -1,0 +1,69 @@
+<div class="row g-2">
+    <!-- Warehouse Selection -->
+    <div class="col-sm-6 col-md-3">
+        <label class="form-label">发货仓库</label>
+        <select class="form-select {% if form.warehouse.errors %}is-invalid{% endif %}"
+                name="warehouse" required>
+            <!-- <option value="">选择仓库</option> -->
+            {% for warehouse in warehouses %}
+                <option value="{{ warehouse.id }}" {% if form.warehouse.value == warehouse.id %}selected{% endif %}>
+                    {{ warehouse.name }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if form.warehouse.errors %}
+            <div class="invalid-feedback">{{ form.warehouse.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Service Selection -->
+    <div class="col-sm-6 col-md-3">
+        <label class="form-label">物流服务</label>
+        <select class="form-select {% if form.service.errors %}is-invalid{% endif %}"
+                name="service" required>
+            <!-- <option value="">选择物流服务</option> -->
+            {% for service in services %}
+                <option value="{{ service.id }}" {% if form.service.value == service.id %}selected{% endif %}>
+                    {{ service.carrier.name_zh }} - {{ service.service_name }}
+                </option>
+            {% endfor %}
+        </select>
+        {% if form.service.errors %}
+            <div class="invalid-feedback">{{ form.service.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Shipping Fee -->
+    <div class="col-sm-6 col-md-2">
+        <label class="form-label">运费</label>
+        <input type="number" step="0.01" min="0"
+               class="form-control {% if form.shipping_fee.errors %}is-invalid{% endif %}"
+               name="shipping_fee" value="{{ form.shipping_fee.value|default:7 }}"
+               required>
+        {% if form.shipping_fee.errors %}
+            <div class="invalid-feedback">{{ form.shipping_fee.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Package Status -->
+    <div class="col-sm-6 col-md-2">
+        <label class="form-label">包裹状态</label>
+        <input type="text" class="form-control {% if form.pkg_status_code.errors %}is-invalid{% endif %}"
+               name="pkg_status_code" value="{{ form.pkg_status_code.value|default:'0' }}"
+               maxlength="4" required>
+        {% if form.pkg_status_code.errors %}
+            <div class="invalid-feedback">{{ form.pkg_status_code.errors.0 }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Tracking Number -->
+    <div class="col-sm-6 col-md-2">
+        <label class="form-label">跟踪号</label>
+        <input type="text" class="form-control {% if form.tracking_no.errors %}is-invalid{% endif %}"
+               name="tracking_no" value="{{ form.tracking_no.value|default:'' }}"
+               maxlength="30">
+        {% if form.tracking_no.errors %}
+            <div class="invalid-feedback">{{ form.tracking_no.errors.0 }}</div>
+        {% endif %}
+    </div>
+</div>

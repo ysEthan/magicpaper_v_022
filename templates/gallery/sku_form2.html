@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+{% block content %}
+    {% load static %}
+    <style>
+        @import url('static/css/inter.css');
+
+        :root {
+            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+        }
+
+        body {
+            font-feature-settings: "cv03", "cv04", "cv11";
+        }
+    </style>
+
+    <script src="{% static 'dist/js/demo-theme.min.js' %}"></script>
+
+    <div class="container-xl">
+    <div class="page-header d-print-none">
+    <!-- Page body -->
+    <div class="page-body">
+    <div class="container-xl">
+        <div class="row row-cards">
+            <div class="col-12">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                            <div class="d-flex">
+                                <div>
+                                    {% if message.tags == 'error' %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                            <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                                            <path d="M12 8l0 4"></path>
+                                            <path d="M12 16l.01 0"></path>
+                                        </svg>
+                                    {% else %}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                            <path d="M5 12l5 5l10 -10"></path>
+                                        </svg>
+                                    {% endif %}
+                                </div>
+                                <div>{{ message }}</div>
+                            </div>
+                            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" class="card">
+                    {% csrf_token %}
+
+                    <div class="card-header">
+                        <h4 class="card-title">新增 SKU</h4>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="row col-md-12 col-xl-12 g-5">
+                            <div class="col-xl-12">
+
+                                <!-- card-body row_1 start  -->
+                                <div class="row">
+                                    <div class="col-md-12 col-xl-12">
+
+                                        <!-- basic info  -->
+                                        <div class="mb-3">
+                                            <label class="form-label">基础信息</label>
+                                        </div>
+
+                                        <!-- 基础信息输入框 第一行  -->
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control {% if form.sku_code.errors %}is-invalid{% endif %}" name="sku_code"
+                                                           placeholder="SKU编码" value="{{ generated_sku_code }}" readonly>
+                                                    {% if form.sku_code.errors %}
+                                                        <div class="invalid-feedback">{{ form.sku_code.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control {% if form.sku_name.errors %}is-invalid{% endif %}" name="sku_name"
+                                                           placeholder="SKU名称" required value="{{ form.sku_name.value|default:'' }}" >
+                                                    {% if form.sku_name.errors %}
+                                                        <div class="invalid-feedback">{{ form.sku_name.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+
+
+
+
+
+                                        <!-- 基础输入框 第二行  -->
+                                        <div class="row g-2">
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="number" step="0.01" class="form-control {% if form.weight.errors %}is-invalid{% endif %}" name="weight"
+                                                           placeholder="重量(g)" value="{{ form.weight.value|default:'' }}">
+                                                    {% if form.weight.errors %}
+                                                        <div class="invalid-feedback">{{ form.weight.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="number" class="form-control {% if form.length.errors %}is-invalid{% endif %}" name="length"
+                                                           placeholder="长(mm)" value="{{ form.length.value|default:'' }}">
+                                                    {% if form.length.errors %}
+                                                        <div class="invalid-feedback">{{ form.length.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="number" class="form-control {% if form.width.errors %}is-invalid{% endif %}" name="width"
+                                                           placeholder="宽(mm)" value="{{ form.width.value|default:'' }}">
+                                                    {% if form.width.errors %}
+                                                        <div class="invalid-feedback">{{ form.width.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="number" class="form-control {% if form.height.errors %}is-invalid{% endif %}" name="height"
+                                                           placeholder="高(mm)" value="{{ form.height.value|default:'' }}">
+                                                    {% if form.height.errors %}
+                                                        <div class="invalid-feedback">{{ form.height.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="other_dimensions"
+                                                           placeholder="其他尺寸" value="{{ form.other_dimensions.value|default:'' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 基础信息输入框 第三行  -->
+                                        <div class="row g-2">
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <select class="form-select {% if form.material.errors %}is-invalid{% endif %}" name="material" required>
+                                                        <option value="">选择材质</option>
+                                                        <option value="铜" {% if form.material.value == "铜" %}selected{% endif %}>铜</option>
+                                                        <option value="铁" {% if form.material.value == "铁" %}selected{% endif %}>铁</option>
+                                                        <option value="锌合金" {% if form.material.value == "锌合金" %}selected{% endif %}>锌合金</option>
+                                                        <option value="塑料" {% if form.material.value == "塑料" %}selected{% endif %}>塑料</option>
+                                                        <option value="其他" {% if form.material.value == "其他" %}selected{% endif %}>其他</option>
+                                                    </select>
+                                                    {% if form.material.errors %}
+                                                        <div class="invalid-feedback">{{ form.material.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <select class="form-select {% if form.color.errors %}is-invalid{% endif %}" name="color" required>
+                                                        <option value="">选择颜色</option>
+                                                        <option value="金色" {% if form.color.value == "金色" %}selected{% endif %}>金色</option>
+                                                        <option value="银色" {% if form.color.value == "银色" %}selected{% endif %}>银色</option>
+                                                        <option value="黑色" {% if form.color.value == "黑色" %}selected{% endif %}>黑色</option>
+                                                        <option value="白色" {% if form.color.value == "白色" %}selected{% endif %}>白色</option>
+                                                        <option value="其他" {% if form.color.value == "其他" %}selected{% endif %}>其他</option>
+                                                    </select>
+                                                    {% if form.color.errors %}
+                                                        <div class="invalid-feedback">{{ form.color.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <select class="form-select {% if form.plating_process.errors %}is-invalid{% endif %}" name="plating_process" required>
+                                                        <option value="">电镀工艺</option>
+                                                        <option value="none" {% if form.plating_process.value == "none" %}selected{% endif %}>无电镀</option>
+                                                        <option value="gold" {% if form.plating_process.value == "gold" %}selected{% endif %}>镀金</option>
+                                                        <option value="silver" {% if form.plating_process.value == "silver" %}selected{% endif %}>镀银</option>
+                                                        <option value="nickel" {% if form.plating_process.value == "nickel" %}selected{% endif %}>镀镍</option>
+                                                        <option value="chrome" {% if form.plating_process.value == "chrome" %}selected{% endif %}>镀铬</option>
+                                                        <option value="copper" {% if form.plating_process.value == "copper" %}selected{% endif %}>镀铜</option>
+                                                        <option value="other" {% if form.plating_process.value == "other" %}selected{% endif %}>其他</option>
+                                                    </select>
+                                                    {% if form.plating_process.errors %}
+                                                        <div class="invalid-feedback">{{ form.plating_process.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="surface_treatment"
+                                                           placeholder="表面处理" value="{{ form.surface_treatment.value|default:'' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- card-body row_2 start  -->
+                                <div class="row">
+                                    <div class="col-md-12 col-xl-12">
+                                        <!-- basic info  -->
+                                        <div class="mb-3">
+                                            <label class="form-label">SPU信息</label>
+                                        </div>
+
+                                        <!-- SPU信息输入框  -->
+                                        <div class="row g-12">
+                                            <div class="col-md-12">
+
+                                                <div class="mb-3">
+                                                    <div class="form-selectgroup">
+                                                        <label class="form-selectgroup-item">
+                                                            <input type="radio" name="spu_selection" value="create"
+                                                                   class="form-selectgroup-input" checked>
+                                                            <span class="form-selectgroup-label">直接新建SPU</span>
+                                                        </label>
+
+                                                        <label class="form-selectgroup-item">
+                                                            <input type="radio" name="spu_selection" value="reference"
+                                                                   class="form-selectgroup-input">
+                                                            <span class="form-selectgroup-label">引用现有SPU</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                        <div class="row g-2">
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <!-- 新建SPU时的输入框 -->
+                                                    <input type="text" class="form-control" id="newSpuCode" placeholder="SPU编码" readonly>
+                                                    
+                                                    <!-- 引用现有SPU时的搜索框 -->
+                                                    <input class="form-control" list="datalistOptions" id="spuSearch" 
+                                                           placeholder="输入SPU搜索" style="display: none;" 
+                                                           {% if form.spu.errors %}class="is-invalid"{% endif %} />
+                                                    <input type="hidden" name="spu" id="spuHiddenInput">
+                                                    <datalist id="datalistOptions">
+                                                        {% for spu in spus %}
+                                                            <option value="{{ spu.spu_code }} - {{ spu.spu_name }}" 
+                                                                    data-id="{{ spu.id }}"
+                                                                    data-product-type="{{ spu.product_type }}"
+                                                                    data-sales-channel="{{ spu.sales_channel }}"
+                                                                    data-brand="{{ spu.brand }}"
+                                                                    data-poc="{{ spu.poc_id }}">
+                                                        {% endfor %}
+                                                    </datalist>
+                                                    {% if form.spu.errors %}
+                                                        <div class="invalid-feedback">{{ form.spu.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <!-- spu输入框 第二行  -->
+                                        <div class="row g-2">
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <select class="form-select {% if form.product_type.errors %}is-invalid{% endif %}" name="product_type" id="productTypeSelect" required>
+                                                        <option value="">选择类型</option>
+                                                        <option value="math_design">设计款</option>
+                                                        <option value="ready_made">现货款</option>
+                                                        <option value="raw_material">材料</option>
+                                                        <option value="packing_material">包材</option>
+                                                    </select>
+                                                    {% if form.product_type.errors %}
+                                                        <div class="invalid-feedback">{{ form.product_type.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <select class="form-select" name="sales_channel" id="salesChannelSelect">
+                                                        <option value="">销售渠道</option>
+                                                        <option value="1">线上</option>
+                                                        <option value="2">线下</option>
+                                                        <option value="3">全渠道</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <input type="text" class="form-control" name="brand" id="brandInput" placeholder="品牌">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <div class="mb-3">
+                                                    <select class="form-select" name="poc" id="pocSelect">
+                                                        <option value="">选择专员</option>
+                                                        {% for poc in pocs %}
+                                                            <option value="{{ poc.id }}">{{ poc.username }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+
+
+
+                                    </div>
+                                </div>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-end">
+                        <div class="d-flex">
+                            <button type="submit" class="btn btn-primary">保存</button>
+                            <a href="{% url 'gallery:sku_list' %}" class="btn btn-link">返回</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const spuSelectionRadios = document.querySelectorAll('input[name="spu_selection"]');
+    const newSpuCode = document.getElementById('newSpuCode');
+    const spuSearch = document.getElementById('spuSearch');
+    const datalist = document.getElementById('datalistOptions');
+    const productTypeSelect = document.getElementById('productTypeSelect');
+    const salesChannelSelect = document.getElementById('salesChannelSelect');
+    const brandInput = document.getElementById('brandInput');
+    const pocSelect = document.getElementById('pocSelect');
+    const spuHiddenInput = document.getElementById('spuHiddenInput');
+    
+    // 获取最新的SPU ID并生成新的SPU编码
+    let nextSpuId = 1;
+    if (datalist.options.length > 0) {
+        const allIds = Array.from(datalist.options).map(option => 
+            parseInt(option.dataset.id)
+        );
+        nextSpuId = Math.max(...allIds) + 1;
+    }
+    const generatedSpuCode = `SPU${String(nextSpuId).padStart(6, '0')}`;
+    newSpuCode.value = generatedSpuCode;
+    
+    // 存储所有SPU选项的数据
+    const spuOptions = [];
+    for (const option of datalist.options) {
+        spuOptions.push({
+            value: option.value,
+            id: option.dataset.id,
+            productType: option.dataset.productType,
+            salesChannel: option.dataset.salesChannel,
+            brand: option.dataset.brand,
+            poc: option.dataset.poc
+        });
+    }
+    
+    // 处理SPU选择
+    function handleSPUSelection(value) {
+        console.log('Handling SPU selection for value:', value);
+        
+        // 查找匹配的SPU选项
+        const selectedSPU = spuOptions.find(spu => spu.value === value);
+        console.log('Selected SPU:', selectedSPU);
+        
+        if (selectedSPU) {
+            // 更新所有字段
+            spuHiddenInput.value = selectedSPU.id;
+            productTypeSelect.value = selectedSPU.productType || '';
+            salesChannelSelect.value = selectedSPU.salesChannel || '';
+            brandInput.value = selectedSPU.brand || '';
+            pocSelect.value = selectedSPU.poc || '';
+        } else {
+            // 清空所有字段
+            spuHiddenInput.value = '';
+            productTypeSelect.value = '';
+            salesChannelSelect.value = '';
+            brandInput.value = '';
+            pocSelect.value = '';
+        }
+    }
+    
+    // 监听单选按钮变化
+    spuSelectionRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'create') {
+                // 显示新建SPU输入框，隐藏搜索框
+                newSpuCode.style.display = 'block';
+                spuSearch.style.display = 'none';
+                // 清空所有字段
+                spuHiddenInput.value = '';
+                productTypeSelect.value = '';
+                salesChannelSelect.value = '';
+                brandInput.value = '';
+                pocSelect.value = '';
+                // 设置新的SPU编码到显示框
+                newSpuCode.value = generatedSpuCode;
+            } else {
+                // 显示搜索框，隐藏新建SPU输入框
+                newSpuCode.style.display = 'none';
+                spuSearch.style.display = 'block';
+                // 清空搜索框和隐藏输入框
+                spuSearch.value = '';
+                spuHiddenInput.value = '';
+            }
+        });
+    });
+    
+    // 初始化时触发一次选中状态的处理
+    const selectedRadio = document.querySelector('input[name="spu_selection"]:checked');
+    if (selectedRadio && selectedRadio.value === 'create') {
+        newSpuCode.style.display = 'block';
+        spuSearch.style.display = 'none';
+    }
+    
+    // 监听搜索框事件
+    spuSearch.addEventListener('input', function(e) {
+        handleSPUSelection(e.target.value);
+    });
+    
+    spuSearch.addEventListener('change', function(e) {
+        handleSPUSelection(e.target.value);
+    });
+});
+</script>
+
+{% endblock %}
+
+

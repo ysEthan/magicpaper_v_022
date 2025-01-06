@@ -1,0 +1,278 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}编辑采购订单{% else %}新建采购订单{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">{% if form.instance.pk %}编辑采购订单{% else %}新建采购订单{% endif %}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{% url 'procurement:purchase_order_list' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回列表
+            </a>
+        </div>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- 订单基本信息 -->
+            <div class="col-md-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">基本信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- 订单编号 -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.order_number.id_for_label }}" class="form-label">{{ form.order_number.label }}</label>
+                                {{ form.order_number }}
+                                {% if form.order_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.order_number.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- 供应商 -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">{{ form.supplier.label }}</label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.supplier.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- 预计交付日期 -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.expected_delivery_date.id_for_label }}" class="form-label">{{ form.expected_delivery_date.label }}</label>
+                                {{ form.expected_delivery_date }}
+                                {% if form.expected_delivery_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.expected_delivery_date.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- 备注 -->
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.remark.id_for_label }}" class="form-label">{{ form.remark.label }}</label>
+                                {{ form.remark }}
+                                {% if form.remark.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.remark.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 订单明细 -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">订单明细</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">
+                            <i class="fas fa-plus"></i> 添加商品
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {{ items_formset.management_form }}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="items-table">
+                                <thead>
+                                    <tr>
+                                        <th>商品</th>
+                                        <th>数量</th>
+                                        <th>单价</th>
+                                        <th>总价</th>
+                                        <th>备注</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="items-tbody">
+                                    {% for item_form in items_formset %}
+                                    <tr class="item-form">
+                                        <td>
+                                            {{ item_form.id }}
+                                            {{ item_form.sku }}
+                                            {% if item_form.sku.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ item_form.sku.errors.0 }}
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ item_form.quantity }}
+                                            {% if item_form.quantity.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ item_form.quantity.errors.0 }}
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ item_form.unit_price }}
+                                            {% if item_form.unit_price.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ item_form.unit_price.errors.0 }}
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="item-total">0.00</td>
+                                        <td>
+                                            {{ item_form.remark }}
+                                            {% if item_form.remark.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ item_form.remark.errors.0 }}
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-danger remove-item">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {{ item_form.DELETE }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>总计：</strong></td>
+                                        <td id="total-amount">0.00</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div class="col-12 mt-4 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control, .form-select {
+        max-width: 100%;
+    }
+    .remove-item {
+        margin: 0;
+    }
+    .item-form .delete-checkbox {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const itemsTable = document.getElementById('items-tbody');
+        const addItemBtn = document.getElementById('add-item');
+        const totalAmountCell = document.getElementById('total-amount');
+        const formsetPrefix = '{{ items_formset.prefix }}';
+        
+        // 更新序号和总价
+        function updateFormIndexes() {
+            const forms = itemsTable.getElementsByClassName('item-form');
+            let totalAmount = 0;
+            
+            for (let i = 0; i < forms.length; i++) {
+                const form = forms[i];
+                const inputs = form.querySelectorAll('input, select, textarea');
+                const quantityInput = form.querySelector('input[name$="-quantity"]');
+                const priceInput = form.querySelector('input[name$="-unit_price"]');
+                const totalCell = form.querySelector('.item-total');
+                
+                // 更新表单索引
+                inputs.forEach(input => {
+                    const name = input.getAttribute('name');
+                    if (name) {
+                        input.setAttribute('name', name.replace(/\d+/, i));
+                        input.setAttribute('id', input.getAttribute('id').replace(/\d+/, i));
+                    }
+                });
+                
+                // 计算行总价
+                if (quantityInput && priceInput) {
+                    const quantity = parseFloat(quantityInput.value) || 0;
+                    const price = parseFloat(priceInput.value) || 0;
+                    const total = quantity * price;
+                    totalCell.textContent = total.toFixed(2);
+                    totalAmount += total;
+                }
+            }
+            
+            // 更新总金额
+            totalAmountCell.textContent = totalAmount.toFixed(2);
+            
+            // 更新管理表单的TOTAL_FORMS
+            const totalForms = document.querySelector(`#id_${formsetPrefix}-TOTAL_FORMS`);
+            totalForms.value = forms.length;
+        }
+        
+        // 添加新行
+        addItemBtn.addEventListener('click', function() {
+            const forms = itemsTable.getElementsByClassName('item-form');
+            const lastForm = forms[forms.length - 1];
+            const newForm = lastForm.cloneNode(true);
+            
+            // 清空新表单的值
+            newForm.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(input => {
+                input.value = '';
+            });
+            
+            // 重置删除标记
+            const deleteCheckbox = newForm.querySelector('input[name$="-DELETE"]');
+            if (deleteCheckbox) {
+                deleteCheckbox.checked = false;
+            }
+            
+            itemsTable.appendChild(newForm);
+            updateFormIndexes();
+        });
+        
+        // 删除行
+        itemsTable.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-item')) {
+                const row = e.target.closest('.item-form');
+                const forms = itemsTable.getElementsByClassName('item-form');
+                
+                if (forms.length > 1) {
+                    row.remove();
+                    updateFormIndexes();
+                } else {
+                    alert('至少需要保留一行商品！');
+                }
+            }
+        });
+        
+        // 监听数量和单价变化
+        itemsTable.addEventListener('input', function(e) {
+            if (e.target.name.includes('quantity') || e.target.name.includes('unit_price')) {
+                updateFormIndexes();
+            }
+        });
+        
+        // 初始化
+        updateFormIndexes();
+    });
+</script>
+{% endblock %} 

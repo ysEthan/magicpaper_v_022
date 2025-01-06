@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>个人资料</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img src="{% static 'images/default-avatar.png' %}" class="img-fluid rounded-circle">
+                        </div>
+                        <div class="col-md-8">
+                            <h4>{{ user.username }}</h4>
+                            <p>邮箱：{{ user.email|default:"未设置" }}</p>
+                            <p>加入时间：{{ user.date_joined|date:"Y-m-d" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

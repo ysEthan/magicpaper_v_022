@@ -1,0 +1,297 @@
+<div class="row g-2">
+    <div class="col-md-3">
+        <div class="mb-3">
+            <input class="form-control" list="skuDatalist" id="skuSearch" 
+                   placeholder="输入SKU编码或名称搜索"  
+                   {% if form.sku.errors %}class="is-invalid"{% endif %} />
+            <input type="hidden" name="sku_id" id="skuHiddenInput">
+            <datalist id="skuDatalist">
+                {% for sku in skus %}
+                    <option value="{{ sku.sku_code }} - {{ sku.sku_name }}" 
+                            data-id="{{ sku.id }}"
+                            data-specs="{{ sku.specs }}"
+                            data-stock="{{ sku.stock_qty }}"
+                            data-img-url="{{ sku.img_url }}">
+                {% endfor %}
+            </datalist>
+            {% if form.sku.errors %}
+                <div class="invalid-feedback">{{ form.sku.errors.0 }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- 已选择的SKU列表 -->
+
+    <div class="col-12">
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">图片</th>
+                            <th>SKU编码</th>
+                            <th>商品名称</th>
+                            <th>规格</th>
+                            <th>数量</th>
+                            <th>单价</th>
+                            <th>折扣</th>
+                            <th>小计</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="selectedSkuList">
+                        {% if form.instance.pk %}
+                            {% for cart in form.instance.cart_set.all %}
+                            <tr data-sku-id="{{ cart.sku.id }}">
+                                <td>
+                                    <img src="/media/{{ cart.sku.img_url|default:'skus/no-image.png' }}" 
+                                         alt="{{ cart.sku.sku_name }}"
+                                         class="img-thumbnail sku-thumbnail"
+                                         data-preview-url="/media/{{ cart.sku.img_url|default:'skus/no-image.png' }}">
+                                </td>
+                                <td>{{ cart.sku.sku_code }}</td>
+                                <td>{{ cart.sku.sku_name }}</td>
+                                <td>{{ cart.sku.specs }}</td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm qty-input" 
+                                           value="{{ cart.qty }}" min="1" style="width: 80px">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm price-input" 
+                                           value="{{ cart.price }}" min="0" step="0.01" style="width: 80px">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control form-control-sm discount-input" 
+                                           value="{{ cart.discount }}" min="0" step="0.01" style="width: 80px">
+                                </td>
+                                <td class="subtotal">{{ cart.actual_price }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm remove-sku">删除</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end pe-1"><strong>用户支付运费：</strong></td>
+                            <td style="width: 80px;">
+                                <input type="number" step="0.01" min="0"
+                                       class="form-control form-control-sm {% if form.freight.errors %}is-invalid{% endif %}"
+                                       name="freight" value="{{ form.freight.value|default:1 }}"
+                                       id="userFreight"
+                                       style="width: 80px;"
+                                       required>
+                                {% if form.freight.errors %}
+                                    <div class="invalid-feedback">{{ form.freight.errors.0 }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-1"><strong>商品总计：</strong></td>
+                            <td id="totalAmount" style="width: 80px;">0.00</td>
+                            <td class="text-end pe-1"><strong>订单总计：</strong></td>
+                            <td id="orderTotal" style="width: 80px;">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+<!-- 用于存储购物车数据的隐藏字段 -->
+<input type="hidden" name="cart_data" id="cartData" value="">
+
+<style>
+.hover-zoom-container {
+    position: fixed;
+    display: none;
+    z-index: 9999;
+    width: 240px;
+    height: 240px;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    border-radius: 4px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 10px;
+}
+
+.sku-thumbnail {
+    cursor: zoom-in;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.sku-thumbnail:hover {
+    border-color: #206bc4;
+}
+</style>
+
+<!-- 图片预览容器 -->
+<div class="hover-zoom-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const skuSearch = document.getElementById('skuSearch');
+    const skuDatalist = document.getElementById('skuDatalist');
+    const selectedSkuList = document.getElementById('selectedSkuList');
+    const cartData = document.getElementById('cartData');
+    const zoomContainer = document.querySelector('.hover-zoom-container');
+
+    // 选择SKU
+    skuSearch.addEventListener('input', function() {
+        const selectedOption = Array.from(skuDatalist.options).find(option => 
+            option.value === this.value
+        );
+
+        if (selectedOption) {
+            const skuId = selectedOption.dataset.id;
+            const [skuCode, skuName] = selectedOption.value.split(' - ');
+            const specs = selectedOption.dataset.specs || '';
+            
+            // 检查是否已经添加过
+            if (selectedSkuList.querySelector(`tr[data-sku-id="${skuId}"]`)) {
+                alert('该SKU已经添加过了');
+                this.value = '';
+                return;
+            }
+
+            // 添加到已选列表
+            const row = document.createElement('tr');
+            row.dataset.skuId = skuId;
+            row.innerHTML = `
+                <td>
+                    <img src="/media/${selectedOption.dataset.imgUrl || 'skus/no-image.png'}" 
+                         alt="${skuName}"
+                         class="img-thumbnail sku-thumbnail"
+                         data-preview-url="/media/${selectedOption.dataset.imgUrl || 'skus/no-image.png'}">
+                </td>
+                <td>${skuCode}</td>
+                <td>${skuName}</td>
+                <td>${specs}</td>
+                <td>
+                    <input type="number" class="form-control form-control-sm qty-input" 
+                           value="1" min="1" style="width: 80px">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm price-input" 
+                           value="0" min="0" step="0.01" style="width: 80px">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm discount-input" 
+                           value="0" min="0" step="0.01" style="width: 80px">
+                </td>
+                <td class="subtotal">0.00</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-sku">删除</button>
+                </td>
+            `;
+            selectedSkuList.appendChild(row);
+            
+            // 清空搜索框
+            this.value = '';
+            
+            // 更新购物车数据
+            updateCartData();
+        }
+    });
+
+    // 删除已选SKU
+    selectedSkuList.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-sku')) {
+            e.target.closest('tr').remove();
+            updateCartData();
+        }
+    });
+
+    // 更新数量、价格或折扣时重新计算
+    selectedSkuList.addEventListener('change', function(e) {
+        if (e.target.classList.contains('qty-input') || 
+            e.target.classList.contains('price-input') || 
+            e.target.classList.contains('discount-input')) {
+            const row = e.target.closest('tr');
+            const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
+            const discount = parseFloat(row.querySelector('.discount-input').value) || 0;
+            const subtotal = (price * qty) - discount;
+            row.querySelector('.subtotal').textContent = subtotal.toFixed(2);
+            updateCartData();
+        }
+    });
+
+    // 更新购物车数据
+    window.updateCartData = function() {
+        const cartItems = [];
+        selectedSkuList.querySelectorAll('tr[data-sku-id]').forEach(row => {
+            cartItems.push({
+                sku_id: row.dataset.skuId,
+                qty: parseInt(row.querySelector('.qty-input').value) || 0,
+                price: parseFloat(row.querySelector('.price-input').value) || 0,
+                discount: parseFloat(row.querySelector('.discount-input').value) || 0
+            });
+        });
+        
+        // 更新隐藏字段的值
+        cartData.value = JSON.stringify(cartItems);
+        console.log('Updated cart data:', cartData.value);
+
+        // 更新商品总计
+        const total = cartItems.reduce((sum, item) => {
+            return sum + (item.price * item.qty - item.discount);
+        }, 0);
+        document.getElementById('totalAmount').textContent = total.toFixed(2);
+
+        // 更新订单总计（商品总计 + 用户支付运费）
+        const userFreight = parseFloat(document.getElementById('userFreight').value) || 0;
+        document.getElementById('orderTotal').textContent = (total + userFreight).toFixed(2);
+    }
+
+    // 初始化购物车数据
+    updateCartData();
+
+    // 监听用户支付运费变化
+    document.getElementById('userFreight').addEventListener('change', updateCartData);
+
+    // 在表单提交前确保购物车数据已更新
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // 更新购物车数据
+        updateCartData();
+        
+        // 检查是否有选择商品
+        if (!cartData.value || cartData.value === '[]') {
+            e.preventDefault();
+            alert('请至少选择一个商品');
+            return false;
+        }
+        
+        console.log('Submitting form with cart data:', cartData.value);
+        return true;
+    });
+
+    // 图片预览功能
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('sku-thumbnail')) {
+            const previewUrl = e.target.dataset.previewUrl;
+            if (previewUrl) {
+                const rect = e.target.getBoundingClientRect();
+                zoomContainer.style.backgroundImage = `url('${previewUrl}')`;
+                zoomContainer.style.display = 'block';
+                zoomContainer.style.left = (rect.right + 20) + 'px';
+                zoomContainer.style.top = (rect.top - 100) + 'px';
+            }
+        } else if (zoomContainer.style.display === 'block') {
+            zoomContainer.style.display = 'none';
+        }
+    });
+
+    // 当页面滚动时隐藏预览
+    window.addEventListener('scroll', function() {
+        zoomContainer.style.display = 'none';
+    });
+});
+</script>
+
+

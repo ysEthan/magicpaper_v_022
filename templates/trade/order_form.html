@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    @import url('static/css/inter.css');
+
+    :root {
+        --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+    }
+
+    body {
+        font-feature-settings: "cv03", "cv04", "cv11";
+    }
+</style>
+
+
+
+        <div class="page-body">
+            <div class="container-xl">
+                <div class="row row-cards">
+                    <div class="col-12">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                                    <div class="d-flex">
+                                        <div>
+                                            {% if message.tags == 'error' %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                    <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                                                    <path d="M12 8l0 4"></path>
+                                                    <path d="M12 16l.01 0"></path>
+                                                </svg>
+                                            {% else %}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                    <path d="M5 12l5 5l10 -10"></path>
+                                                </svg>
+                                            {% endif %}
+                                        </div>
+                                        <div>{{ message }}</div>
+                                    </div>
+                                    <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="post" class="card">
+                            {% csrf_token %}
+
+                            <div class="card-header">
+                                <h4 class="card-title">{% if form.instance.pk %}编辑订单{% else %}新增订单{% endif %}</h4>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- 订单基本信息 -->
+                                    <div class="col-md-12 mb-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">订单基本信息</label>
+                                            {% include "trade/includes/_basic_info.html" %}
+                                        </div>
+                                    </div>
+
+
+
+                                    <!-- 收件人信息 -->
+                                    <div class="col-md-12 mb-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">收件人信息</label>
+                                            {% include "trade/includes/_recipient_info.html" %}
+                                        </div>
+                                    </div>
+
+                                    <!-- 备注信息 -->
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">备注信息</label>
+                                            {% include "trade/includes/_remark_info.html" %}
+                                        </div>
+                                    </div>
+                                    <!-- 购物车信息 -->
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">商品明细</label>
+                                            {% include "trade/includes/_cart_info.html" %}
+                                        </div>
+                                    </div>
+
+
+                                    <!-- 仓配信息 -->
+                                    <div class="col-md-12"></div>
+                                        <div class="mb-3">
+                                            <label class="form-label">仓配信息</label>
+                                            {% include "trade/includes/_logistics_info.html" %}
+                                        </div>
+                                    </div>
+
+
+
+
+                                </div>
+                            </div>
+
+                            <div class="card-footer text-end">
+                                <div class="d-flex">
+                                    <a href="{% url 'trade:order_list' %}" class="btn btn-link">返回</a>
+                                    <button type="submit" class="btn btn-primary ms-auto">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                            <path d="M5 12l5 5l10 -10" />
+                                        </svg>
+                                        保存
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orderTypeSelect = document.querySelector('select[name="order_type"]');
+    const orderNoInput = document.querySelector('input[name="order_no"]');
+    const platformOrderNoInput = document.querySelector('input[name="platform_order_no"]');
+    const form = document.querySelector('form');
+    const submitButton = form.querySelector('button[type="submit"]');
+    let isSubmitting = false;
+    
+    // 处理订单号生成
+    if (orderTypeSelect && orderNoInput && platformOrderNoInput) {
+        orderTypeSelect.addEventListener('change', function() {
+            fetch(`/trade/generate-order-no/?order_type=${this.value}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.order_no) {
+                        orderNoInput.value = data.order_no;
+                        platformOrderNoInput.value = data.platform_order_no;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    }
+
+    // 处理表单提交
+    if (submitButton) {
+        submitButton.onclick = function(e) {
+            // 阻止默认行为
+            e.preventDefault();
+            
+            // 防止重复提交
+            if (isSubmitting) {
+                return false;
+            }
+            
+            // 确保购物车数据已更新
+            if (typeof updateCartData === 'function') {
+                updateCartData();
+            }
+            
+            // 验证购物车数据
+            const cartData = document.getElementById('cartData');
+            let cartItems;
+            
+            try {
+                cartItems = cartData && cartData.value ? JSON.parse(cartData.value) : [];
+            } catch (error) {
+                alert('商品数据格式错误');
+                return false;
+            }
+            
+            // 检查是否有商品
+            if (!cartItems || cartItems.length === 0) {
+                alert('请至少选择一个商品');
+                return false;
+            }
+            
+            // 检查商品数据的有效性
+            for (const item of cartItems) {
+                if (!item.qty || item.qty <= 0) {
+                    alert('商品数量必须大于0');
+                    return false;
+                }
+                if (!item.price || item.price <= 0) {
+                    alert('商品单价必须大于0');
+                    return false;
+                }
+            }
+            
+            // 所有验证通过，设置标志并提交表单
+            isSubmitting = true;
+            form.submit();
+        };
+
+        // 移除表单的默认提交事件
+        form.onsubmit = function(e) {
+            if (!isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+        };
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

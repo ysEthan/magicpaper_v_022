@@ -1,0 +1,114 @@
+<div class="mb-3">
+    <div class="form-selectgroup">
+        <label class="form-selectgroup-item">
+            <input type="radio" name="spu_selection" value="create" class="form-selectgroup-input" checked>
+            <span class="form-selectgroup-label">直接新建SPU</span>
+        </label>
+        <label class="form-selectgroup-item">
+            <input type="radio" name="spu_selection" value="reference" class="form-selectgroup-input">
+            <span class="form-selectgroup-label">引用现有SPU</span>
+        </label>
+    </div>
+</div>
+
+<div class="row g-2">
+    <div class="col-md-3">
+        <div class="mb-3">
+            <!-- 新建SPU时的输入框 -->
+            <input type="text" class="form-control" id="newSpuCode" 
+                   value="{{ generated_spu_code }}" placeholder="SPU编码" readonly>
+            
+            <!-- 引用现有SPU时的搜索框 -->
+            <input class="form-control" list="datalistOptions" id="spuSearch" 
+                   placeholder="输入SPU搜索" style="display: none;" 
+                   {% if form.spu.errors %}class="is-invalid"{% endif %} />
+            <input type="hidden" name="spu" id="spuHiddenInput">
+            <datalist id="datalistOptions">
+                {% for spu in spus %}
+                    <option value="{{ spu.spu_code }} - {{ spu.spu_name }}" 
+                            data-id="{{ spu.id }}"
+                            data-product-type="{{ spu.product_type }}"
+                            data-sales-channel="{{ spu.sales_channel }}"
+                            data-brand="{{ spu.brand }}"
+                            data-poc="{{ spu.poc_id }}">
+                {% endfor %}
+            </datalist>
+            {% if form.spu.errors %}
+                <div class="invalid-feedback">{{ form.spu.errors.0 }}</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="mb-3">
+            <input type="text" class="form-control" id="spuName" name="spu_name" 
+                   placeholder="SPU名称" required>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="mb-3">
+            <select class="form-select" id="categorySelect" name="category" required>
+                <option value="">选择类目</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.level > 1 %}style="padding-left: {{ category.level|add:-1 }}em;"{% endif %}>
+                        {% if category.level > 1 %}└─{% endif %}
+                        {{ category.category_name_zh }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="mb-3">
+            <select class="form-select" id="productTypeSelect" name="product_type" required>
+                <option value="">选择类型</option>
+                <option value="math_design">设计款</option>
+                <option value="ready_made">现货款</option>
+                <option value="raw_material">材料</option>
+                <option value="packing_material">包材</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="row g-2">
+    <div class="col-md-3">
+        <div class="mb-3">
+            <select class="form-select" id="salesChannelSelect" name="sales_channel">
+                <option value="">销售渠道</option>
+                <option value="1">线上</option>
+                <option value="2">线下</option>
+                <option value="3">全渠道</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="mb-3">
+            <select class="form-select" id="brandSelect" name="brand">
+                <option value="">选择品牌</option>
+                {% for brand in brands %}
+                    <option value="{{ brand.id }}">{{ brand.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="mb-3">
+            <select class="form-select" id="pocSelect" name="poc">
+                <option value="">选择专员</option>
+                {% for poc in pocs %}
+                    <option value="{{ poc.id }}">{{ poc.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <textarea class="form-control" id="spuRemark" name="spu_remark" 
+              rows="3" placeholder="SPU备注"></textarea>
+</div>

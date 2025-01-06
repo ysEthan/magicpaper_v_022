@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}库存列表{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">库存列表</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索表单 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">仓库</label>
+                    <select name="warehouse" class="form-select">
+                        <option value="">全部仓库</option>
+                        {% for w in warehouses %}
+                        <option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:"i" %}selected{% endif %}>
+                            {{ w.warehouse_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">SKU编码</label>
+                    <input type="text" class="form-control" name="sku_code" value="{{ sku_code }}" placeholder="SKU编码">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">批次号</label>
+                    <input type="text" class="form-control" name="batch_code" value="{{ batch_code }}" placeholder="批次号">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <circle cx="10" cy="10" r="7" />
+                            <line x1="21" y1="21" x2="15" y2="15" />
+                        </svg>
+                        搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 库存列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>仓库</th>
+                            <th>SKU编码</th>
+                            <th>SKU名称</th>
+                            <th>批次号</th>
+                            <th>当前库存</th>
+                            <th>创建时间</th>
+                            <th>最后更新</th>
+                            <th class="w-1"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inventory in inventories %}
+                        <tr>
+                            <td>{{ inventory.warehouse.warehouse_name }}</td>
+                            <td>{{ inventory.sku.sku_code }}</td>
+                            <td>{{ inventory.sku.sku_name }}</td>
+                            <td>{{ inventory.batch_code }}</td>
+                            <td>{{ inventory.quantity }}</td>
+                            <td>{{ inventory.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>{{ inventory.updated_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <div class="btn-list flex-nowrap">
+                                    <a href="#" class="btn btn-white btn-sm" data-bs-toggle="modal" data-bs-target="#modal-inventory-detail-{{ inventory.id }}">
+                                        详情
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- 库存详情模态框 -->
+                        <div class="modal modal-blur fade" id="modal-inventory-detail-{{ inventory.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">库存详情</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="datagrid mb-3">
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">仓库</div>
+                                                <div class="datagrid-content">{{ inventory.warehouse.warehouse_name }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">SKU编码</div>
+                                                <div class="datagrid-content">{{ inventory.sku.sku_code }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">SKU名称</div>
+                                                <div class="datagrid-content">{{ inventory.sku.sku_name }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">批次号</div>
+                                                <div class="datagrid-content">{{ inventory.batch_code }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">当前库存</div>
+                                                <div class="datagrid-content">{{ inventory.quantity }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">创建时间</div>
+                                                <div class="datagrid-content">{{ inventory.created_at|date:"Y-m-d H:i:s" }}</div>
+                                            </div>
+                                            <div class="datagrid-item">
+                                                <div class="datagrid-title">最后更新</div>
+                                                <div class="datagrid-content">{{ inventory.updated_at|date:"Y-m-d H:i:s" }}</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- 最近出入库记录 -->
+                                        <div class="hr-text">最近入库记录</div>
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter card-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>入库单号</th>
+                                                        <th>入库类型</th>
+                                                        <th>数量</th>
+                                                        <th>入库时间</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for stock_in in inventory.stock_in.all|slice:":5" %}
+                                                    <tr>
+                                                        <td>{{ stock_in.stock_in_code }}</td>
+                                                        <td>{{ stock_in.get_stock_in_type_display }}</td>
+                                                        <td>{{ stock_in.quantity }}</td>
+                                                        <td>{{ stock_in.stock_in_time|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                    {% empty %}
+                                                    <tr>
+                                                        <td colspan="4" class="text-center">暂无入库记录</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="hr-text">最近出库记录</div>
+                                        <div class="table-responsive">
+                                            <table class="table table-vcenter card-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>出库单号</th>
+                                                        <th>出库类型</th>
+                                                        <th>数量</th>
+                                                        <th>出库时间</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for stock_out in inventory.stock_outs.all|slice:":5" %}
+                                                    <tr>
+                                                        <td>{{ stock_out.stock_out_code }}</td>
+                                                        <td>{{ stock_out.get_stock_out_type_display }}</td>
+                                                        <td>{{ stock_out.quantity }}</td>
+                                                        <td>{{ stock_out.stock_out_time|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                    {% empty %}
+                                                    <tr>
+                                                        <td colspan="4" class="text-center">暂无出库记录</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">关闭</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">暂无数据</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            {% if inventories.has_other_pages %}
+            <div class="card-footer d-flex align-items-center">
+                <p class="m-0 text-muted">
+                    显示第 <span>{{ inventories.start_index }}</span> 到第 <span>{{ inventories.end_index }}</span> 条
+                    共 <span>{{ inventories.paginator.count }}</span> 条
+                </p>
+                <ul class="pagination m-0 ms-auto">
+                    {% if inventories.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ inventories.previous_page_number }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if sku_code %}&sku_code={{ sku_code }}{% endif %}{% if batch_code %}&batch_code={{ batch_code }}{% endif %}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <polyline points="15 6 9 12 15 18" />
+                            </svg>
+                            上一页
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for i in inventories.paginator.page_range %}
+                        {% if inventories.number == i %}
+                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if sku_code %}&sku_code={{ sku_code }}{% endif %}{% if batch_code %}&batch_code={{ batch_code }}{% endif %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if inventories.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ inventories.next_page_number }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if sku_code %}&sku_code={{ sku_code }}{% endif %}{% if batch_code %}&batch_code={{ batch_code }}{% endif %}">
+                            下一页
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <polyline points="9 6 15 12 9 18" />
+                            </svg>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
