@@ -16,18 +16,18 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>库存统计</h5>
+                                    <h5>按仓库统计</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
                                         <table class="table table-bordered">
                                             <thead>
                                                 <tr>
-                                                    <th rowspan="1" class="align-middle text-center">仓库</th>
-                                                    <th class="text-center">月初库存</th>
-                                                    <th class="text-center">本月入库</th>
-                                                    <th class="text-center">本月出库</th>
-                                                    <th class="text-center">当前库存</th>
+                                                    <th rowspan="1" class="align-middle text-center" style="width: 15%">仓库</th>
+                                                    <th class="text-center" style="width: 20%">月初库存</th>
+                                                    <th class="text-center" style="width: 20%">本月入库</th>
+                                                    <th class="text-center" style="width: 20%">本月出库</th>
+                                                    <th class="text-center" style="width: 25%">当前库存</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -47,30 +47,32 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-md-6">
+                    <div class="row mb-4">
+                        <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>最近入库记录</h5>
+                                    <h5>按品牌统计</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
-                                        <table class="table">
+                                        <table class="table table-bordered">
                                             <thead>
                                                 <tr>
-                                                    <th>入库单号</th>
-                                                    <th>仓库</th>
-                                                    <th>数量</th>
-                                                    <th>时间</th>
+                                                    <th rowspan="1" class="align-middle text-center" style="width: 15%">品牌</th>
+                                                    <th class="text-center" style="width: 20%">月初库存</th>
+                                                    <th class="text-center" style="width: 20%">本月入库</th>
+                                                    <th class="text-center" style="width: 20%">本月出库</th>
+                                                    <th class="text-center" style="width: 25%">当前库存</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for stock_in in recent_stock_ins %}
+                                                {% for brand in brands %}
                                                 <tr>
-                                                    <td>{{ stock_in.stock_in_code }}</td>
-                                                    <td>{{ stock_in.warehouse.warehouse_name }}</td>
-                                                    <td>{{ stock_in.quantity }}</td>
-                                                    <td>{{ stock_in.stock_in_time|date:"Y-m-d H:i" }}</td>
+                                                    <td class="align-middle">{{ brand.brand_name }}</td>
+                                                    <td class="text-right">{{ brand.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ brand.initial_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ brand.total_in|default:0 }}<br><span class="text-muted">¥{{ brand.total_in_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ brand.total_out|default:0 }}<br><span class="text-muted">¥{{ brand.total_out_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ brand.total_inventory|default:0 }}<br><span class="text-muted">¥{{ brand.total_inventory_amount|default:0|floatformat:2 }}</span></td>
                                                 </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -79,29 +81,33 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>最近出库记录</h5>
+                                    <h5>按产品类型统计</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
-                                        <table class="table">
+                                        <table class="table table-bordered">
                                             <thead>
                                                 <tr>
-                                                    <th>出库单号</th>
-                                                    <th>仓库</th>
-                                                    <th>数量</th>
-                                                    <th>时间</th>
+                                                    <th rowspan="1" class="align-middle text-center" style="width: 15%">产品类型</th>
+                                                    <th class="text-center" style="width: 20%">月初库存</th>
+                                                    <th class="text-center" style="width: 20%">本月入库</th>
+                                                    <th class="text-center" style="width: 20%">本月出库</th>
+                                                    <th class="text-center" style="width: 25%">当前库存</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for stock_out in recent_stock_outs %}
+                                                {% for product_type in product_types %}
                                                 <tr>
-                                                    <td>{{ stock_out.stock_out_code }}</td>
-                                                    <td>{{ stock_out.warehouse.warehouse_name }}</td>
-                                                    <td>{{ stock_out.quantity }}</td>
-                                                    <td>{{ stock_out.stock_out_time|date:"Y-m-d H:i" }}</td>
+                                                    <td class="align-middle">{{ product_type.type_name }}</td>
+                                                    <td class="text-right">{{ product_type.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ product_type.initial_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ product_type.total_in|default:0 }}<br><span class="text-muted">¥{{ product_type.total_in_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ product_type.total_out|default:0 }}<br><span class="text-muted">¥{{ product_type.total_out_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ product_type.total_inventory|default:0 }}<br><span class="text-muted">¥{{ product_type.total_inventory_amount|default:0|floatformat:2 }}</span></td>
                                                 </tr>
                                                 {% endfor %}
                                             </tbody>

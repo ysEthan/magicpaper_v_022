@@ -364,15 +364,142 @@ def report(request):
             'total_inventory': current_inventory['total_qty'] or 0,
             'total_inventory_amount': round(current_inventory['total_amount'] or 0, 2)
         })
+
+    # 按品牌统计数据
+    from gallery.models import Brand
+    # 首先获取有库存的品牌ID列表
+    brands_with_inventory = Inventory.objects.filter(
+        quantity__gt=0
+    ).values_list('sku__spu__brand', flat=True).distinct()
     
-    # 获取最近的出入库记录
-    recent_stock_ins = StockIn.objects.all().order_by('-stock_in_time')[:5]
-    recent_stock_outs = StockOut.objects.all().order_by('-stock_out_time')[:5]
+    # 只获取有库存的品牌
+    brands = Brand.objects.filter(id__in=brands_with_inventory)
+    brand_data = []
+
+    for brand in brands:
+        # 计算本月入库数据（通过SKU的SPU关联到品牌）
+        total_in = StockIn.objects.filter(
+            stock_in_time__gte=month_start,
+            sku__spu__brand=brand
+        ).annotate(
+            amount=F('quantity') * F('unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+
+        # 计算本月出库数据
+        total_out = StockOut.objects.filter(
+            stock_out_time__gte=month_start,
+            inventory__sku__spu__brand=brand
+        ).annotate(
+            amount=F('quantity') * F('inventory__stock_in__unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+
+        # 获取当前库存
+        current_inventory = Inventory.objects.filter(
+            quantity__gt=0,
+            sku__spu__brand=brand
+        ).annotate(
+            amount=F('quantity') * F('stock_in__unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+
+        # 计算月初库存
+        initial_qty = (current_inventory['total_qty'] or 0) - (total_in['total_qty'] or 0) + (total_out['total_qty'] or 0)
+        initial_amount = (current_inventory['total_amount'] or 0) - (total_in['total_amount'] or 0) + (total_out['total_amount'] or 0)
+
+        # 整合该品牌的所有数据
+        brand_data.append({
+            'brand_name': brand.name,
+            'initial_quantity': initial_qty,
+            'initial_amount': round(initial_amount or 0, 2),
+            'total_in': total_in['total_qty'] or 0,
+            'total_in_amount': round(total_in['total_amount'] or 0, 2),
+            'total_out': total_out['total_qty'] or 0,
+            'total_out_amount': round(total_out['total_amount'] or 0, 2),
+            'total_inventory': current_inventory['total_qty'] or 0,
+            'total_inventory_amount': round(current_inventory['total_amount'] or 0, 2)
+        })
+
+    # 按产品类型统计数据
+    from gallery.models import SPU
+    # 首先获取有库存的产品类型列表
+    product_types_with_inventory = Inventory.objects.filter(
+        quantity__gt=0
+    ).values_list('sku__spu__product_type', flat=True).distinct()
+    
+    # 所有可能的产品类型
+    all_product_types = [
+        ('math_design', '设计款'),
+        ('ready_made', '现货款'),
+        ('raw_material', '材料'),
+        ('packing_material', '包材'),
+    ]
+    # 只保留有库存的产品类型
+    product_types = [pt for pt in all_product_types if pt[0] in product_types_with_inventory]
+    product_type_data = []
+
+    for product_type, type_name in product_types:
+        # 计算本月入库数据
+        total_in = StockIn.objects.filter(
+            stock_in_time__gte=month_start,
+            sku__spu__product_type=product_type
+        ).annotate(
+            amount=F('quantity') * F('unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+
+        # 计算本月出库数据
+        total_out = StockOut.objects.filter(
+            stock_out_time__gte=month_start,
+            inventory__sku__spu__product_type=product_type
+        ).annotate(
+            amount=F('quantity') * F('inventory__stock_in__unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+
+        # 获取当前库存
+        current_inventory = Inventory.objects.filter(
+            quantity__gt=0,
+            sku__spu__product_type=product_type
+        ).annotate(
+            amount=F('quantity') * F('stock_in__unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+
+        # 计算月初库存
+        initial_qty = (current_inventory['total_qty'] or 0) - (total_in['total_qty'] or 0) + (total_out['total_qty'] or 0)
+        initial_amount = (current_inventory['total_amount'] or 0) - (total_in['total_amount'] or 0) + (total_out['total_amount'] or 0)
+
+        # 整合该产品类型的所有数据
+        product_type_data.append({
+            'type_name': type_name,
+            'initial_quantity': initial_qty,
+            'initial_amount': round(initial_amount or 0, 2),
+            'total_in': total_in['total_qty'] or 0,
+            'total_in_amount': round(total_in['total_amount'] or 0, 2),
+            'total_out': total_out['total_qty'] or 0,
+            'total_out_amount': round(total_out['total_amount'] or 0, 2),
+            'total_inventory': current_inventory['total_qty'] or 0,
+            'total_inventory_amount': round(current_inventory['total_amount'] or 0, 2)
+        })
     
     context = {
         'warehouses': warehouse_data,
-        'recent_stock_ins': recent_stock_ins,
-        'recent_stock_outs': recent_stock_outs,
+        'brands': brand_data,
+        'product_types': product_type_data,
         'active_menu': 'storage_report',
         'current_month': today.strftime('%Y年%m月')
     }

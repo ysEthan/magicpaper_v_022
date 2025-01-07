@@ -167,6 +167,7 @@ class ProductSync:
                     'status': True,
                     'category': category,
                     'brand': brand,  # 设置品牌关联
+                    'product_type': product.get('prop1', 'ready_made'),  # 设置产品类型，默认为现货款
                 }
                 
                 spu, created = SPU.objects.update_or_create(
@@ -185,6 +186,8 @@ class ProductSync:
                     'width': float(product['width']) if product['width'] else 0,
                     'height': float(product['height']) if product['height'] else 0,
                     'weight': float(product['weight']) if product['weight'] else 0,
+                    'other_dimensions': product.get('prop3', ''),
+                    'surface_treatment': product.get('prop10', ''),
                     'status': True,
                     'spu': spu,
                     'suppliers_list': json.dumps([{
