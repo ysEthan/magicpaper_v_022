@@ -4,6 +4,9 @@ from . import views
 app_name = 'storage'
 
 urlpatterns = [
+    # 报表
+    path('', views.report, name='report'),
+    
     # 仓库管理
     path('warehouse/', views.warehouse_list, name='warehouse_list'),
     path('warehouse/create/', views.warehouse_create, name='warehouse_create'),
@@ -21,7 +24,8 @@ urlpatterns = [
     # 出库管理
     path('stock-out/', views.stock_out_list, name='stock_out_list'),
     path('stock-out/create/', views.stock_out_create, name='stock_out_create'),
-    
+    path('stock-out/sync/', views.sync_sales_order, name='sync_sales_order'),
+
     # API接口
     path('api/available-inventory/', views.available_inventory_api, name='available_inventory_api'),
 ] 

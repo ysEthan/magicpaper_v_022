@@ -13,6 +13,17 @@
             </div>
             <div class="col-auto ms-auto d-print-none">
                 <div class="btn-list">
+                    <a href="{% url 'storage:sync_sales_order' %}" class="btn btn-success d-none d-sm-inline-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                            <path d="M16 3l0 4" />
+                            <path d="M8 3l0 4" />
+                            <path d="M4 11l16 0" />
+                            <path d="M8 15h2v2h-2z" />
+                        </svg>
+                        同步销售订单
+                    </a>
                     <a href="{% url 'storage:stock_out_create' %}" class="btn btn-primary d-none d-sm-inline-block">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -43,15 +54,15 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">出库单号</label>
-                    <input type="text" class="form-control" name="stock_out_code" value="{{ stock_out_code }}" placeholder="出库单号">
+                    <input type="text" class="form-control" name="stock_out_code" value="{{ stock_out_code|default:'' }}" placeholder="出库单号">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">开始日期</label>
-                    <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                    <input type="date" class="form-control" name="date_from" value="{{ date_from|default:'' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">结束日期</label>
-                    <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                    <input type="date" class="form-control" name="date_to" value="{{ date_to|default:'' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
@@ -79,9 +90,7 @@
                             <th>仓库</th>
                             <th>SKU</th>
                             <th>批次号</th>
-                            <th>出库类型</th>
                             <th>数量</th>
-                            <th>关联单号</th>
                             <th>操作人</th>
                             <th>出库时间</th>
                             <th class="w-1"></th>
@@ -92,11 +101,9 @@
                         <tr>
                             <td>{{ stock_out.stock_out_code }}</td>
                             <td>{{ stock_out.warehouse.warehouse_name }}</td>
-                            <td>{{ stock_out.sku.sku_code }}</td>
+                            <td>{{ stock_out.inventory.sku.sku_code }}</td>
                             <td>{{ stock_out.inventory.batch_code }}</td>
-                            <td>{{ stock_out.get_stock_out_type_display }}</td>
                             <td>{{ stock_out.quantity }}</td>
-                            <td>{{ stock_out.related_order|default:"-" }}</td>
                             <td>{{ stock_out.operator.get_full_name|default:stock_out.operator.username }}</td>
                             <td>{{ stock_out.stock_out_time|date:"Y-m-d H:i" }}</td>
                             <td>
@@ -107,79 +114,9 @@
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- 出库详情模态框 -->
-                        <div class="modal modal-blur fade" id="modal-stock-out-detail-{{ stock_out.id }}" tabindex="-1" role="dialog" aria-hidden="true">
-                            <div class="modal-dialog modal-lg" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">出库详情</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="datagrid mb-3">
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">出库单号</div>
-                                                <div class="datagrid-content">{{ stock_out.stock_out_code }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">出库类型</div>
-                                                <div class="datagrid-content">{{ stock_out.get_stock_out_type_display }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">仓库</div>
-                                                <div class="datagrid-content">{{ stock_out.warehouse.warehouse_name }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">关联单号</div>
-                                                <div class="datagrid-content">{{ stock_out.related_order|default:"-" }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">SKU编码</div>
-                                                <div class="datagrid-content">{{ stock_out.sku.sku_code }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">SKU名称</div>
-                                                <div class="datagrid-content">{{ stock_out.sku.sku_name }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">批次号</div>
-                                                <div class="datagrid-content">{{ stock_out.inventory.batch_code }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">出库数量</div>
-                                                <div class="datagrid-content">{{ stock_out.quantity }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">操作人</div>
-                                                <div class="datagrid-content">{{ stock_out.operator.get_full_name|default:stock_out.operator.username }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">出库时间</div>
-                                                <div class="datagrid-content">{{ stock_out.stock_out_time|date:"Y-m-d H:i:s" }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">创建时间</div>
-                                                <div class="datagrid-content">{{ stock_out.created_at|date:"Y-m-d H:i:s" }}</div>
-                                            </div>
-                                        </div>
-
-                                        {% if stock_out.remark %}
-                                        <div class="mb-3">
-                                            <label class="form-label">备注</label>
-                                            <div>{{ stock_out.remark }}</div>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">关闭</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% empty %}
                         <tr>
-                            <td colspan="10" class="text-center">暂无数据</td>
+                            <td colspan="8" class="text-center">暂无数据</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -208,12 +145,12 @@
                     
                     {% for i in stock_outs.paginator.page_range %}
                         {% if stock_outs.number == i %}
-                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
                         {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ i }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_out_code %}&stock_out_code={{ stock_out_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
-                                {{ i }}
-                            </a>
+                            <a class="page-link" href="?page={{ i }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_out_code %}&stock_out_code={{ stock_out_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ i }}</a>
                         </li>
                         {% endif %}
                     {% endfor %}

@@ -52,15 +52,15 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">入库单号</label>
-                    <input type="text" class="form-control" name="stock_in_code" value="{{ stock_in_code }}" placeholder="入库单号">
+                    <input type="text" class="form-control" name="stock_in_code" value="{{ stock_in_code|default:'' }}" placeholder="入库单号">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">开始日期</label>
-                    <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+                    <input type="date" class="form-control" name="date_from" value="{{ date_from|default:'' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">结束日期</label>
-                    <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+                    <input type="date" class="form-control" name="date_to" value="{{ date_to|default:'' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
@@ -211,12 +211,12 @@
                     
                     {% for i in stock_ins.paginator.page_range %}
                         {% if stock_ins.number == i %}
-                        <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
                         {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ i }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_in_code %}&stock_in_code={{ stock_in_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
-                                {{ i }}
-                            </a>
+                            <a class="page-link" href="?page={{ i }}{% if warehouse_id %}&warehouse={{ warehouse_id }}{% endif %}{% if stock_in_code %}&stock_in_code={{ stock_in_code }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ i }}</a>
                         </li>
                         {% endif %}
                     {% endfor %}

@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.paginator import Paginator
-from django.db.models import Q, Sum
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Q, Sum, F
+from django.db import models
 from django.utils import timezone
 from .models import Warehouse, Inventory, StockIn, StockOut
 from .forms import WarehouseForm, StockInForm, StockOutForm
@@ -110,15 +111,15 @@ def inventory_list(request):
     inventories = Inventory.objects.all()
     
     # 过滤条件
-    warehouse_id = request.GET.get('warehouse')
-    sku_code = request.GET.get('sku_code')
-    batch_code = request.GET.get('batch_code')
+    warehouse_id = request.GET.get('warehouse', 'None')
+    sku_code = request.GET.get('sku_code', '')
+    batch_code = request.GET.get('batch_code', '')
     
-    if warehouse_id:
+    if warehouse_id and warehouse_id != 'None':
         inventories = inventories.filter(warehouse_id=warehouse_id)
-    if sku_code:
+    if sku_code and sku_code != 'None':
         inventories = inventories.filter(sku__sku_code__icontains=sku_code)
-    if batch_code:
+    if batch_code and batch_code != 'None':
         inventories = inventories.filter(batch_code__icontains=batch_code)
     
     # 分页
@@ -133,8 +134,8 @@ def inventory_list(request):
         'inventories': inventories,
         'warehouses': warehouses,
         'warehouse_id': warehouse_id,
-        'sku_code': sku_code,
-        'batch_code': batch_code
+        'sku_code': '' if sku_code == 'None' else sku_code,
+        'batch_code': '' if batch_code == 'None' else batch_code
     }
     return render(request, 'storage/inventory/list.html', context)
 
@@ -145,29 +146,40 @@ def stock_in_list(request):
     warehouses = Warehouse.objects.all()
     
     # 处理筛选
-    warehouse_id = request.GET.get('warehouse')
-    stock_in_code = request.GET.get('stock_in_code')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
+    warehouse_id = request.GET.get('warehouse', '')
+    stock_in_code = request.GET.get('stock_in_code', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
     
-    if warehouse_id:
+    if warehouse_id and warehouse_id != 'None':
         stock_ins = stock_ins.filter(warehouse_id=warehouse_id)
-    if stock_in_code:
+    if stock_in_code and stock_in_code != 'None':
         stock_ins = stock_ins.filter(stock_in_code__icontains=stock_in_code)
     if date_from:
         stock_ins = stock_ins.filter(stock_in_time__date__gte=date_from)
     if date_to:
         stock_ins = stock_ins.filter(stock_in_time__date__lte=date_to)
     
-    return render(request, 'storage/stock_in/list.html', {
+    # 分页
+    paginator = Paginator(stock_ins, 10)  # 每页显示10条记录
+    page = request.GET.get('page')
+    try:
+        stock_ins = paginator.get_page(page)
+    except PageNotAnInteger:
+        stock_ins = paginator.get_page(1)
+    except EmptyPage:
+        stock_ins = paginator.get_page(paginator.num_pages)
+    
+    context = {
         'stock_ins': stock_ins,
         'warehouses': warehouses,
-        'warehouse_id': warehouse_id,
-        'stock_in_code': stock_in_code,
+        'warehouse_id': warehouse_id if warehouse_id != 'None' else '',
+        'stock_in_code': stock_in_code if stock_in_code != 'None' else '',
         'date_from': date_from,
         'date_to': date_to,
         'active_menu': 'storage_stock_in'
-    })
+    }
+    return render(request, 'storage/stock_in/list.html', context)
 
 @login_required
 def stock_in_create(request):
@@ -202,29 +214,40 @@ def stock_out_list(request):
     warehouses = Warehouse.objects.all()
     
     # 处理筛选
-    warehouse_id = request.GET.get('warehouse')
-    stock_out_code = request.GET.get('stock_out_code')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
+    warehouse_id = request.GET.get('warehouse', '')
+    stock_out_code = request.GET.get('stock_out_code', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
     
-    if warehouse_id:
+    if warehouse_id and warehouse_id != 'None':
         stock_outs = stock_outs.filter(warehouse_id=warehouse_id)
-    if stock_out_code:
+    if stock_out_code and stock_out_code != 'None':
         stock_outs = stock_outs.filter(stock_out_code__icontains=stock_out_code)
     if date_from:
         stock_outs = stock_outs.filter(stock_out_time__date__gte=date_from)
     if date_to:
         stock_outs = stock_outs.filter(stock_out_time__date__lte=date_to)
     
-    return render(request, 'storage/stock_out/list.html', {
+    # 分页
+    paginator = Paginator(stock_outs, 10)  # 每页显示10条记录
+    page = request.GET.get('page')
+    try:
+        stock_outs = paginator.get_page(page)
+    except PageNotAnInteger:
+        stock_outs = paginator.get_page(1)
+    except EmptyPage:
+        stock_outs = paginator.get_page(paginator.num_pages)
+    
+    context = {
         'stock_outs': stock_outs,
         'warehouses': warehouses,
-        'warehouse_id': warehouse_id,
-        'stock_out_code': stock_out_code,
+        'warehouse_id': warehouse_id if warehouse_id != 'None' else '',
+        'stock_out_code': stock_out_code if stock_out_code != 'None' else '',
         'date_from': date_from,
         'date_to': date_to,
         'active_menu': 'storage_stock_out'
-    })
+    }
+    return render(request, 'storage/stock_out/list.html', context)
 
 @login_required
 def stock_out_create(request):
@@ -262,3 +285,95 @@ def sync_stock_in(request):
         return JsonResponse({'success': success, 'message': message})
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'同步失败：{str(e)}'}, status=500)
+
+@login_required
+def sync_sales_order(request):
+    """同步出库单数据"""
+    from .sync import sync_all_stock_outs
+    
+    try:
+        success, message = sync_all_stock_outs()
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+    except Exception as e:
+        messages.error(request, f"同步失败：{str(e)}")
+    
+    return redirect('storage:stock_out_list')
+
+@login_required
+def report(request):
+    """库存报表页面"""
+    # 获取所有仓库
+    warehouses = Warehouse.objects.all()
+    warehouse_data = []
+    
+    # 获取当月第一天
+    today = timezone.now()
+    month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # 获取每个仓库的统计数据
+    for warehouse in warehouses:
+        # 计算本月出入库数量和金额
+        total_in = StockIn.objects.filter(
+            warehouse=warehouse,
+            stock_in_time__gte=month_start
+        ).annotate(
+            amount=F('quantity') * F('unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+        
+        # 获取本月出库记录关联的入库单的成本
+        total_out = StockOut.objects.filter(
+            warehouse=warehouse,
+            stock_out_time__gte=month_start
+        ).annotate(
+            amount=F('quantity') * F('inventory__stock_in__unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+        
+        # 获取当前库存数量和金额
+        current_inventory = Inventory.objects.filter(
+            warehouse=warehouse,
+            quantity__gt=0  # 只计算有库存的记录
+        ).annotate(
+            amount=F('quantity') * F('stock_in__unit_cost')
+        ).aggregate(
+            total_qty=Sum('quantity'),
+            total_amount=Sum('amount')
+        )
+        
+        # 计算月初库存（当前库存 - 本月入库 + 本月出库）
+        initial_qty = (current_inventory['total_qty'] or 0) - (total_in['total_qty'] or 0) + (total_out['total_qty'] or 0)
+        initial_amount = (current_inventory['total_amount'] or 0) - (total_in['total_amount'] or 0) + (total_out['total_amount'] or 0)
+        
+        # 整合该仓库的所有数据
+        warehouse_data.append({
+            'warehouse_name': warehouse.warehouse_name,
+            'initial_quantity': initial_qty,
+            'initial_amount': round(initial_amount or 0, 2),
+            'total_in': total_in['total_qty'] or 0,
+            'total_in_amount': round(total_in['total_amount'] or 0, 2),
+            'total_out': total_out['total_qty'] or 0,
+            'total_out_amount': round(total_out['total_amount'] or 0, 2),
+            'total_inventory': current_inventory['total_qty'] or 0,
+            'total_inventory_amount': round(current_inventory['total_amount'] or 0, 2)
+        })
+    
+    # 获取最近的出入库记录
+    recent_stock_ins = StockIn.objects.all().order_by('-stock_in_time')[:5]
+    recent_stock_outs = StockOut.objects.all().order_by('-stock_out_time')[:5]
+    
+    context = {
+        'warehouses': warehouse_data,
+        'recent_stock_ins': recent_stock_ins,
+        'recent_stock_outs': recent_stock_outs,
+        'active_menu': 'storage_report',
+        'current_month': today.strftime('%Y年%m月')
+    }
+    return render(request, 'storage/report.html', context)

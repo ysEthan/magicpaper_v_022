@@ -104,6 +104,13 @@ class StockIn(models.Model):
         validators=[MinValueValidator(1)],
         verbose_name='入库数量'
     )
+    unit_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='单位成本',
+        help_text='入库时的单位成本金额',
+        default=0
+    )
     source_order = models.CharField(
         max_length=50,
         null=True,

@@ -74,8 +74,8 @@
                                     {{ warehouse.warehouse_name }}
                                 </a>
                             </td>
-                            <td>{{ warehouse.location }}</td>
-                            <td>{{ warehouse.manager.get_full_name|default:warehouse.manager.username }}</td>
+                            <td>{{ warehouse.location|default:"-" }}</td>
+                            <td>{% if warehouse.manager %}{{ warehouse.manager.get_full_name|default:warehouse.manager.username }}{% else %}-{% endif %}</td>
                             <td>{{ warehouse.contact_phone|default:"-" }}</td>
                             <td>
                                 {% if warehouse.status %}

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from .models import SPU, SKU, Category
+from .models import SPU, SKU, Category, Brand
 
 class ProductSync:
     def __init__(self):
@@ -149,11 +149,24 @@ class ProductSync:
                         category_name_en__iexact=class_name_en,
                     ).first() or default_category
                 
+                # 处理品牌
+                brand = None
+                if product.get('prop9'):
+                    brand_name = product['prop9'].strip()
+                    if brand_name:
+                        brand, _ = Brand.objects.get_or_create(
+                            name=brand_name,
+                            defaults={
+                                'status': True
+                            }
+                        )
+                
                 # 处理SPU
                 spu_defaults = {
                     'spu_name': product['goodsName'],
                     'status': True,
                     'category': category,
+                    'brand': brand,  # 设置品牌关联
                 }
                 
                 spu, created = SPU.objects.update_or_create(

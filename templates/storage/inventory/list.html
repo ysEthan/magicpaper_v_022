@@ -21,7 +21,7 @@
                 <div class="col-md-3">
                     <label class="form-label">仓库</label>
                     <select name="warehouse" class="form-select">
-                        <option value="">全部仓库</option>
+                        <option value="None">全部仓库</option>
                         {% for w in warehouses %}
                         <option value="{{ w.id }}" {% if warehouse_id == w.id|stringformat:"i" %}selected{% endif %}>
                             {{ w.warehouse_name }}
@@ -87,110 +87,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- 库存详情模态框 -->
-                        <div class="modal modal-blur fade" id="modal-inventory-detail-{{ inventory.id }}" tabindex="-1" role="dialog" aria-hidden="true">
-                            <div class="modal-dialog modal-lg" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">库存详情</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="datagrid mb-3">
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">仓库</div>
-                                                <div class="datagrid-content">{{ inventory.warehouse.warehouse_name }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">SKU编码</div>
-                                                <div class="datagrid-content">{{ inventory.sku.sku_code }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">SKU名称</div>
-                                                <div class="datagrid-content">{{ inventory.sku.sku_name }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">批次号</div>
-                                                <div class="datagrid-content">{{ inventory.batch_code }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">当前库存</div>
-                                                <div class="datagrid-content">{{ inventory.quantity }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">创建时间</div>
-                                                <div class="datagrid-content">{{ inventory.created_at|date:"Y-m-d H:i:s" }}</div>
-                                            </div>
-                                            <div class="datagrid-item">
-                                                <div class="datagrid-title">最后更新</div>
-                                                <div class="datagrid-content">{{ inventory.updated_at|date:"Y-m-d H:i:s" }}</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- 最近出入库记录 -->
-                                        <div class="hr-text">最近入库记录</div>
-                                        <div class="table-responsive">
-                                            <table class="table table-vcenter card-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>入库单号</th>
-                                                        <th>入库类型</th>
-                                                        <th>数量</th>
-                                                        <th>入库时间</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {% for stock_in in inventory.stock_in.all|slice:":5" %}
-                                                    <tr>
-                                                        <td>{{ stock_in.stock_in_code }}</td>
-                                                        <td>{{ stock_in.get_stock_in_type_display }}</td>
-                                                        <td>{{ stock_in.quantity }}</td>
-                                                        <td>{{ stock_in.stock_in_time|date:"Y-m-d H:i" }}</td>
-                                                    </tr>
-                                                    {% empty %}
-                                                    <tr>
-                                                        <td colspan="4" class="text-center">暂无入库记录</td>
-                                                    </tr>
-                                                    {% endfor %}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        <div class="hr-text">最近出库记录</div>
-                                        <div class="table-responsive">
-                                            <table class="table table-vcenter card-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>出库单号</th>
-                                                        <th>出库类型</th>
-                                                        <th>数量</th>
-                                                        <th>出库时间</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {% for stock_out in inventory.stock_outs.all|slice:":5" %}
-                                                    <tr>
-                                                        <td>{{ stock_out.stock_out_code }}</td>
-                                                        <td>{{ stock_out.get_stock_out_type_display }}</td>
-                                                        <td>{{ stock_out.quantity }}</td>
-                                                        <td>{{ stock_out.stock_out_time|date:"Y-m-d H:i" }}</td>
-                                                    </tr>
-                                                    {% empty %}
-                                                    <tr>
-                                                        <td colspan="4" class="text-center">暂无出库记录</td>
-                                                    </tr>
-                                                    {% endfor %}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">关闭</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                         {% empty %}
                         <tr>
                             <td colspan="8" class="text-center">暂无数据</td>
@@ -249,4 +145,114 @@
         </div>
     </div>
 </div>
+
+<!-- 库存详情模态框 -->
+{% for inventory in inventories %}
+<div class="modal modal-blur fade" id="modal-inventory-detail-{{ inventory.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">库存详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="datagrid mb-3">
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">仓库</div>
+                        <div class="datagrid-content">{{ inventory.warehouse.warehouse_name }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">SKU编码</div>
+                        <div class="datagrid-content">{{ inventory.sku.sku_code }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">SKU名称</div>
+                        <div class="datagrid-content">{{ inventory.sku.sku_name }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">批次号</div>
+                        <div class="datagrid-content">{{ inventory.batch_code }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">当前库存</div>
+                        <div class="datagrid-content">{{ inventory.quantity }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">创建时间</div>
+                        <div class="datagrid-content">{{ inventory.created_at|date:"Y-m-d H:i:s" }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">最后更新</div>
+                        <div class="datagrid-content">{{ inventory.updated_at|date:"Y-m-d H:i:s" }}</div>
+                    </div>
+                </div>
+
+                <!-- 最近出入库记录 -->
+                <div class="hr-text">最近入库记录</div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>入库单号</th>
+                                <th>入库类型</th>
+                                <th>数量</th>
+                                <th>入库时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% with recent_stock_ins=inventory.stock_in.all|slice:":5" %}
+                            {% for stock_in in recent_stock_ins %}
+                            <tr>
+                                <td>{{ stock_in.stock_in_code }}</td>
+                                <td>{{ stock_in.get_stock_in_type_display }}</td>
+                                <td>{{ stock_in.quantity }}</td>
+                                <td>{{ stock_in.stock_in_time|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">暂无入库记录</td>
+                            </tr>
+                            {% endfor %}
+                            {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="hr-text">最近出库记录</div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>出库单号</th>
+                                <th>出库类型</th>
+                                <th>数量</th>
+                                <th>出库时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% with recent_stock_outs=inventory.stock_outs.all|slice:":5" %}
+                            {% for stock_out in recent_stock_outs %}
+                            <tr>
+                                <td>{{ stock_out.stock_out_code }}</td>
+                                <td>{{ stock_out.get_stock_out_type_display }}</td>
+                                <td>{{ stock_out.quantity }}</td>
+                                <td>{{ stock_out.stock_out_time|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">暂无出库记录</td>
+                            </tr>
+                            {% endfor %}
+                            {% endwith %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %} 

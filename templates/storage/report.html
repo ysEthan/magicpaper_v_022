@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Storage Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">库存报表 - {{ current_month }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>库存统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th rowspan="1" class="align-middle text-center">仓库</th>
+                                                    <th class="text-center">月初库存</th>
+                                                    <th class="text-center">本月入库</th>
+                                                    <th class="text-center">本月出库</th>
+                                                    <th class="text-center">当前库存</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for warehouse in warehouses %}
+                                                <tr>
+                                                    <td class="align-middle">{{ warehouse.warehouse_name }}</td>
+                                                    <td class="text-right">{{ warehouse.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ warehouse.initial_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ warehouse.total_in|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_in_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ warehouse.total_out|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_out_amount|default:0|floatformat:2 }}</span></td>
+                                                    <td class="text-right">{{ warehouse.total_inventory|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_inventory_amount|default:0|floatformat:2 }}</span></td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>最近入库记录</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>入库单号</th>
+                                                    <th>仓库</th>
+                                                    <th>数量</th>
+                                                    <th>时间</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for stock_in in recent_stock_ins %}
+                                                <tr>
+                                                    <td>{{ stock_in.stock_in_code }}</td>
+                                                    <td>{{ stock_in.warehouse.warehouse_name }}</td>
+                                                    <td>{{ stock_in.quantity }}</td>
+                                                    <td>{{ stock_in.stock_in_time|date:"Y-m-d H:i" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>最近出库记录</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>出库单号</th>
+                                                    <th>仓库</th>
+                                                    <th>数量</th>
+                                                    <th>时间</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for stock_out in recent_stock_outs %}
+                                                <tr>
+                                                    <td>{{ stock_out.stock_out_code }}</td>
+                                                    <td>{{ stock_out.warehouse.warehouse_name }}</td>
+                                                    <td>{{ stock_out.quantity }}</td>
+                                                    <td>{{ stock_out.stock_out_time|date:"Y-m-d H:i" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any JavaScript needed for the report page
+</script>
+{% endblock %} 
