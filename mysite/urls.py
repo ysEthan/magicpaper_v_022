@@ -21,9 +21,15 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('page.urls')),
     path('muggle/', include('muggle.urls')),
     path('gallery/', include('gallery.urls')),
     path('procurement/', include('procurement.urls')),
     path('storage/', include('storage.urls')),
-    path('', include('page.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    path('trade/', include('trade.urls', namespace='trade')),
+    path('logistics/', include('logistics.urls', namespace='logistics')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

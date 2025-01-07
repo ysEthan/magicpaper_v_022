@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ carrier.name_zh }} - {% trans '物流商详情' %}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{{ carrier.name_zh }}</h2>
+                <div class="text-muted mt-1">{% trans '物流商详情' %}</div>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-service">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        {% trans '添加服务' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Basic info -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans '基本信息' %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '中文名称' %}</label>
+                        <div class="form-control-plaintext">{{ carrier.name_zh }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '英文名称' %}</label>
+                        <div class="form-control-plaintext">{{ carrier.name_en }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '物流商代码' %}</label>
+                        <div class="form-control-plaintext">{{ carrier.code }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '官网地址' %}</label>
+                        <div class="form-control-plaintext">
+                            {% if carrier.url %}
+                            <a href="{{ carrier.url }}" target="_blank">{{ carrier.url }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '联系电话' %}</label>
+                        <div class="form-control-plaintext">{{ carrier.contact|default:'-' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '查询代码' %}</label>
+                        <div class="form-control-plaintext">{{ carrier.query_key|default:'-' }}</div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal-edit">
+                        {% trans '编辑' %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <!-- Services -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans '物流服务' %}</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans '服务名称' %}</th>
+                                <th>{% trans '服务代码' %}</th>
+                                <th>{% trans '服务类型' %}</th>
+                                <th class="w-1"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for service in services %}
+                            <tr>
+                                <td>{{ service.service_name }}</td>
+                                <td>{{ service.service_code }}</td>
+                                <td>{{ service.service_type }}</td>
+                                <td>
+                                    <div class="btn-list flex-nowrap">
+                                        <button class="btn btn-white btn-sm" onclick="editService({{ service.id }})">
+                                            {% trans '编辑' %}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">{% trans '暂无服务' %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit carrier modal -->
+<div class="modal modal-blur fade" id="modal-edit" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans '编辑物流商' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'logistics:carrier_detail' carrier.pk %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '中文名称' %}</label>
+                        <input type="text" class="form-control" name="name_zh" value="{{ carrier.name_zh }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '英文名称' %}</label>
+                        <input type="text" class="form-control" name="name_en" value="{{ carrier.name_en }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '物流商代码' %}</label>
+                        <input type="text" class="form-control" name="code" value="{{ carrier.code }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '官网地址' %}</label>
+                        <input type="url" class="form-control" name="url" value="{{ carrier.url }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '联系电话' %}</label>
+                        <input type="text" class="form-control" name="contact" value="{{ carrier.contact }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '查询代码' %}</label>
+                        <input type="number" class="form-control" name="query_key" value="{{ carrier.query_key }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">{% trans '取消' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans '保存' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add service modal -->
+<div class="modal modal-blur fade" id="modal-service" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans '添加物流服务' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'logistics:carrier_detail' carrier.pk %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_service">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '服务名称' %}</label>
+                        <input type="text" class="form-control" name="service_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '服务代码' %}</label>
+                        <input type="text" class="form-control" name="service_code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '服务类型' %}</label>
+                        <input type="number" class="form-control" name="service_type" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">{% trans '取消' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans '保存' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans '物流商列表' %}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{% trans '物流商管理' %}</h2>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-carrier">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        {% trans '添加物流商' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search form -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">{% trans '搜索' %}</label>
+                    <input type="text" class="form-control" name="search" value="{{ search_term }}" placeholder="{% trans '输入名称或代码搜索...' %}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        {% trans '搜索' %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Carriers list -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>{% trans '中文名称' %}</th>
+                        <th>{% trans '英文名称' %}</th>
+                        <th>{% trans '代码' %}</th>
+                        <th>{% trans '联系电话' %}</th>
+                        <th>{% trans '官网' %}</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for carrier in carriers %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'logistics:carrier_detail' carrier.pk %}">{{ carrier.name_zh }}</a>
+                        </td>
+                        <td>{{ carrier.name_en }}</td>
+                        <td>{{ carrier.code }}</td>
+                        <td>{{ carrier.contact|default:'-' }}</td>
+                        <td>
+                            {% if carrier.url %}
+                            <a href="{{ carrier.url }}" target="_blank">{{ carrier.url }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-list flex-nowrap">
+                                <a href="{% url 'logistics:carrier_detail' carrier.pk %}" class="btn btn-white btn-sm">
+                                    {% trans '详情' %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">{% trans '暂无数据' %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if carriers.has_other_pages %}
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-muted">
+                {% trans '显示' %} {{ carriers.start_index }}-{{ carriers.end_index }} {% trans '共' %} {{ carriers.paginator.count }} {% trans '条' %}
+            </p>
+            <ul class="pagination m-0 ms-auto">
+                {% if carriers.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ carriers.previous_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="15 6 9 12 15 18" />
+                        </svg>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for i in carriers.paginator.page_range %}
+                    {% if carriers.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if search_term %}&search={{ search_term }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if carriers.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ carriers.next_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="9 6 15 12 9 18" />
+                        </svg>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add carrier modal -->
+<div class="modal modal-blur fade" id="modal-carrier" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans '添加物流商' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'logistics:carrier_list' %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '中文名称' %}</label>
+                        <input type="text" class="form-control" name="name_zh" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '英文名称' %}</label>
+                        <input type="text" class="form-control" name="name_en" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '物流商代码' %}</label>
+                        <input type="text" class="form-control" name="code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '官网地址' %}</label>
+                        <input type="url" class="form-control" name="url">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '联系电话' %}</label>
+                        <input type="text" class="form-control" name="contact">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '查询代码' %}</label>
+                        <input type="number" class="form-control" name="query_key">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">{% trans '取消' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans '保存' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

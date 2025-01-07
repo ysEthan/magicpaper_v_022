@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans '包裹列表' %}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{% trans '包裹管理' %}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search form -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{% trans '搜索' %}</label>
+                    <input type="text" class="form-control" name="search" value="{{ search_term }}" placeholder="{% trans '输入运单号或订单号...' %}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% trans '物流商' %}</label>
+                    <select class="form-select" name="carrier">
+                        <option value="">{% trans '全部' %}</option>
+                        {% for carrier in carriers %}
+                        <option value="{{ carrier.id }}" {% if carrier.id|stringformat:"s" == carrier_id %}selected{% endif %}>
+                            {{ carrier.name_zh }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{% trans '状态' %}</label>
+                    <select class="form-select" name="status">
+                        <option value="">{% trans '全部' %}</option>
+                        {% for code, name in status_choices %}
+                        <option value="{{ code }}" {% if code == status %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        {% trans '搜索' %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Packages list -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>{% trans '运单号' %}</th>
+                        <th>{% trans '订单号' %}</th>
+                        <th>{% trans '物流商' %}</th>
+                        <th>{% trans '服务' %}</th>
+                        <th>{% trans '状态' %}</th>
+                        <th>{% trans '重量' %}</th>
+                        <th>{% trans '体积' %}</th>
+                        <th>{% trans '预估费用' %}</th>
+                        <th>{% trans '实际费用' %}</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for package in packages %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'logistics:package_detail' package.pk %}">
+                                {{ package.tracking_no|default:'-' }}
+                            </a>
+                        </td>
+                        <td>{{ package.order.order_number }}</td>
+                        <td>{{ package.carrier_name }}</td>
+                        <td>{{ package.service_name }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if package.pkg_status_code == '0' %}bg-yellow{% endif %}
+                                {% if package.pkg_status_code == '1' %}bg-blue{% endif %}
+                                {% if package.pkg_status_code == '2' %}bg-purple{% endif %}
+                                {% if package.pkg_status_code == '3' %}bg-green{% endif %}
+                                {% if package.pkg_status_code == '4' %}bg-red{% endif %}">
+                                {{ package.get_pkg_status_code_display }}
+                            </span>
+                        </td>
+                        <td>{{ package.weight|default:'-' }} kg</td>
+                        <td>{{ package.volume|default:'-' }}</td>
+                        <td>{{ package.estimated_logistics_cost }}</td>
+                        <td>{{ package.carrier_cost|default:'-' }}</td>
+                        <td>
+                            <div class="btn-list flex-nowrap">
+                                <a href="{% url 'logistics:package_detail' package.pk %}" class="btn btn-white btn-sm">
+                                    {% trans '详情' %}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center">{% trans '暂无数据' %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if packages.has_other_pages %}
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-muted">
+                {% trans '显示' %} {{ packages.start_index }}-{{ packages.end_index }} {% trans '共' %} {{ packages.paginator.count }} {% trans '条' %}
+            </p>
+            <ul class="pagination m-0 ms-auto">
+                {% if packages.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ packages.previous_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}{% if carrier_id %}&carrier={{ carrier_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="15 6 9 12 15 18" />
+                        </svg>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in packages.paginator.page_range %}
+                    {% if packages.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if search_term %}&search={{ search_term }}{% endif %}{% if carrier_id %}&carrier={{ carrier_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if packages.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ packages.next_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}{% if carrier_id %}&carrier={{ carrier_id }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="9 6 15 12 9 18" />
+                        </svg>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

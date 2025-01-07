@@ -1,212 +1,157 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block title %}{% if form.instance.pk %}编辑订单{% else %}创建订单{% endif %}{% endblock %}
+
 {% block content %}
-<style>
-    @import url('static/css/inter.css');
-
-    :root {
-        --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
-    }
-
-    body {
-        font-feature-settings: "cv03", "cv04", "cv11";
-    }
-</style>
-
-
-
-        <div class="page-body">
-            <div class="container-xl">
-                <div class="row row-cards">
-                    <div class="col-12">
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
-                                    <div class="d-flex">
-                                        <div>
-                                            {% if message.tags == 'error' %}
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                    <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
-                                                    <path d="M12 8l0 4"></path>
-                                                    <path d="M12 16l.01 0"></path>
-                                                </svg>
-                                            {% else %}
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                                    <path d="M5 12l5 5l10 -10"></path>
-                                                </svg>
-                                            {% endif %}
-                                        </div>
-                                        <div>{{ message }}</div>
-                                    </div>
-                                    <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-
-                        <form method="post" class="card">
-                            {% csrf_token %}
-
-                            <div class="card-header">
-                                <h4 class="card-title">{% if form.instance.pk %}编辑订单{% else %}新增订单{% endif %}</h4>
-                            </div>
-
-                            <div class="card-body">
-                                <div class="row">
-                                    <!-- 订单基本信息 -->
-                                    <div class="col-md-12 mb-4">
-                                        <div class="mb-3">
-                                            <label class="form-label">订单基本信息</label>
-                                            {% include "trade/includes/_basic_info.html" %}
-                                        </div>
-                                    </div>
-
-
-
-                                    <!-- 收件人信息 -->
-                                    <div class="col-md-12 mb-4">
-                                        <div class="mb-3">
-                                            <label class="form-label">收件人信息</label>
-                                            {% include "trade/includes/_recipient_info.html" %}
-                                        </div>
-                                    </div>
-
-                                    <!-- 备注信息 -->
-                                    <div class="col-md-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">备注信息</label>
-                                            {% include "trade/includes/_remark_info.html" %}
-                                        </div>
-                                    </div>
-                                    <!-- 购物车信息 -->
-                                    <div class="col-md-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">商品明细</label>
-                                            {% include "trade/includes/_cart_info.html" %}
-                                        </div>
-                                    </div>
-
-
-                                    <!-- 仓配信息 -->
-                                    <div class="col-md-12"></div>
-                                        <div class="mb-3">
-                                            <label class="form-label">仓配信息</label>
-                                            {% include "trade/includes/_logistics_info.html" %}
-                                        </div>
-                                    </div>
-
-
-
-
-                                </div>
-                            </div>
-
-                            <div class="card-footer text-end">
-                                <div class="d-flex">
-                                    <a href="{% url 'trade:order_list' %}" class="btn btn-link">返回</a>
-                                    <button type="submit" class="btn btn-primary ms-auto">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                            <path d="M5 12l5 5l10 -10" />
-                                        </svg>
-                                        保存
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+<div class="container-xl">
+    <!-- 页面标题 -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{% if form.instance.pk %}编辑订单{% else %}创建订单{% endif %}</h2>
             </div>
         </div>
+    </div>
 
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                请检查表单中的错误并重新提交。
+            </div>
+            {% endif %}
 
+            <div class="row">
+                {% if not form.instance.pk %}
+                <!-- 订单类型 -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">{{ form.order_type.label }}</label>
+                    {{ form.order_type }}
+                    {% if form.order_type.errors %}
+                    <div class="invalid-feedback">{{ form.order_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 所属店铺 -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">{{ form.shop.label }}</label>
+                    {{ form.shop }}
+                    {% if form.shop.errors %}
+                    <div class="invalid-feedback">{{ form.shop.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if form.instance.pk %}
+                <!-- 订单状态 -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">{{ form.status.label }}</label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <div class="invalid-feedback">{{ form.status.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- 支付方式 -->
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">{{ form.payment_method.label }}</label>
+                    {{ form.payment_method }}
+                    {% if form.payment_method.errors %}
+                    <div class="invalid-feedback">{{ form.payment_method.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- 收货人 -->
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required">{{ form.shipping_contact.label }}</label>
+                    {{ form.shipping_contact }}
+                    {% if form.shipping_contact.errors %}
+                    <div class="invalid-feedback">{{ form.shipping_contact.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 联系电话 -->
+                <div class="col-md-4 mb-3">
+                    <label class="form-label required">{{ form.shipping_phone.label }}</label>
+                    {{ form.shipping_phone }}
+                    {% if form.shipping_phone.errors %}
+                    <div class="invalid-feedback">{{ form.shipping_phone.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- 邮政编码 -->
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">{{ form.postal_code.label }}</label>
+                    {{ form.postal_code }}
+                    {% if form.postal_code.errors %}
+                    <div class="invalid-feedback">{{ form.postal_code.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 收货地址 -->
+            <div class="mb-3">
+                <label class="form-label required">{{ form.shipping_address.label }}</label>
+                {{ form.shipping_address }}
+                {% if form.shipping_address.errors %}
+                <div class="invalid-feedback">{{ form.shipping_address.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- 备注 -->
+            <div class="mb-3">
+                <label class="form-label">{{ form.remark.label }}</label>
+                {{ form.remark }}
+                {% if form.remark.errors %}
+                <div class="invalid-feedback">{{ form.remark.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <div class="d-flex">
+                <a href="{% url 'trade:order_list' %}" class="btn btn-link">取消</a>
+                <button type="submit" class="btn btn-primary ms-auto">保存</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control.is-invalid {
+        background-image: none;
+    }
+    .form-select.is-invalid {
+        background-image: none;
+    }
+    textarea.form-control {
+        height: 100px;
+    }
+</style>
+{% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const orderTypeSelect = document.querySelector('select[name="order_type"]');
-    const orderNoInput = document.querySelector('input[name="order_no"]');
-    const platformOrderNoInput = document.querySelector('input[name="platform_order_no"]');
-    const form = document.querySelector('form');
-    const submitButton = form.querySelector('button[type="submit"]');
-    let isSubmitting = false;
-    
-    // 处理订单号生成
-    if (orderTypeSelect && orderNoInput && platformOrderNoInput) {
-        orderTypeSelect.addEventListener('change', function() {
-            fetch(`/trade/generate-order-no/?order_type=${this.value}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.order_no) {
-                        orderNoInput.value = data.order_no;
-                        platformOrderNoInput.value = data.platform_order_no;
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+    document.addEventListener('DOMContentLoaded', function() {
+        // 为所有表单控件添加必要的类
+        const formControls = document.querySelectorAll('input, select, textarea');
+        formControls.forEach(control => {
+            control.classList.add('form-control');
+            if (control.tagName === 'SELECT') {
+                control.classList.remove('form-control');
+                control.classList.add('form-select');
+            }
+            // 如果有错误，添加 is-invalid 类
+            if (control.nextElementSibling && control.nextElementSibling.classList.contains('invalid-feedback')) {
+                control.classList.add('is-invalid');
+            }
         });
-    }
-
-    // 处理表单提交
-    if (submitButton) {
-        submitButton.onclick = function(e) {
-            // 阻止默认行为
-            e.preventDefault();
-            
-            // 防止重复提交
-            if (isSubmitting) {
-                return false;
-            }
-            
-            // 确保购物车数据已更新
-            if (typeof updateCartData === 'function') {
-                updateCartData();
-            }
-            
-            // 验证购物车数据
-            const cartData = document.getElementById('cartData');
-            let cartItems;
-            
-            try {
-                cartItems = cartData && cartData.value ? JSON.parse(cartData.value) : [];
-            } catch (error) {
-                alert('商品数据格式错误');
-                return false;
-            }
-            
-            // 检查是否有商品
-            if (!cartItems || cartItems.length === 0) {
-                alert('请至少选择一个商品');
-                return false;
-            }
-            
-            // 检查商品数据的有效性
-            for (const item of cartItems) {
-                if (!item.qty || item.qty <= 0) {
-                    alert('商品数量必须大于0');
-                    return false;
-                }
-                if (!item.price || item.price <= 0) {
-                    alert('商品单价必须大于0');
-                    return false;
-                }
-            }
-            
-            // 所有验证通过，设置标志并提交表单
-            isSubmitting = true;
-            form.submit();
-        };
-
-        // 移除表单的默认提交事件
-        form.onsubmit = function(e) {
-            if (!isSubmitting) {
-                e.preventDefault();
-                return false;
-            }
-        };
-    }
-});
+    });
 </script>
-{% endblock %}
 {% endblock %} 

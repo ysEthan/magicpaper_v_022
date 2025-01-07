@@ -4,13 +4,14 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
-    <title>{% block title %}{% endblock %}</title>
+    <title>{% block title %}{% endblock %} - MagicPaper ERP</title>
     {% load static %}
     <!-- CSS files -->
     <link href="{% static 'css/tabler.min.css' %}" rel="stylesheet"/>
     <link href="{% static 'css/tabler-flags.min.css' %}" rel="stylesheet"/>
     <link href="{% static 'css/tabler-payments.min.css' %}" rel="stylesheet"/>
     <link href="{% static 'css/tabler-vendors.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/demo.min.css' %}" rel="stylesheet"/>
     {% block extra_css %}{% endblock %}
     <style>
         .form-label.required:after {
@@ -20,19 +21,77 @@
         .invalid-feedback.d-block {
             display: block !important;
         }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        /* 确保侧边栏始终显示在左侧 */
+        .navbar-vertical.navbar-expand-lg {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 15rem;
+            margin-right: 15rem;
+        }
+        /* 确保主内容区域不被侧边栏遮挡 */
+        .page-wrapper {
+            margin-left: 15rem;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        /* 移动端响应式布局 */
+        @media (max-width: 992px) {
+            .navbar-vertical.navbar-expand-lg {
+                position: fixed;
+                left: -15rem;
+                z-index: 1030;
+                transition: left 0.3s ease;
+            }
+            .navbar-vertical.navbar-expand-lg.show {
+                left: 0;
+            }
+            .page-wrapper {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="wrapper">
         {% include "includes/sidebar.html" %}
         <div class="page-wrapper">
-            {% include "includes/header.html" %}
+            {% if messages %}
+            <div class="container-xl mt-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
             {% block content %}{% endblock %}
             {% include "includes/footer.html" %}
         </div>
     </div>
     <!-- Tabler Core -->
     <script src="{% static 'js/tabler.min.js' %}"></script>
+    <script src="{% static 'js/demo.min.js' %}"></script>
+    <script>
+        // 移动端侧边栏切换
+        document.querySelector('.navbar-toggler')?.addEventListener('click', function() {
+            document.querySelector('.navbar-vertical')?.classList.toggle('show');
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

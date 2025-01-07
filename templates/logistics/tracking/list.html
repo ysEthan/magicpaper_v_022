@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans '物流轨迹' %} - {{ package.tracking_no|default:package.id }}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{% trans '物流轨迹' %}</h2>
+                <div class="text-muted mt-1">{{ package.tracking_no|default:package.id }}</div>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{% url 'logistics:package_detail' package.pk %}" class="btn btn-link">
+                        {% trans '返回包裹详情' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Package info -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3 class="card-title">{% trans '包裹信息' %}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '订单号' %}</label>
+                        <div class="form-control-plaintext">{{ package.order.order_number }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '运单号' %}</label>
+                        <div class="form-control-plaintext">{{ package.tracking_no|default:'-' }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '物流商' %}</label>
+                        <div class="form-control-plaintext">{{ package.carrier_name }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '物流服务' %}</label>
+                        <div class="form-control-plaintext">{{ package.service_name }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tracking timeline -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{% trans '轨迹记录' %}</h3>
+        </div>
+        <div class="card-body">
+            <div class="timeline">
+                {% for record in tracking_records %}
+                <div class="timeline-event">
+                    <div class="timeline-event-icon 
+                        {% if record.status == 0 %}bg-yellow{% endif %}
+                        {% if record.status == 1 %}bg-blue{% endif %}
+                        {% if record.status == 2 %}bg-purple{% endif %}
+                        {% if record.status == 3 %}bg-green{% endif %}
+                        {% if record.status == 4 %}bg-red{% endif %}">
+                        <!-- Timeline icon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <circle cx="12" cy="12" r="9" />
+                            <polyline points="12 7 12 12 15 15" />
+                        </svg>
+                    </div>
+                    <div class="timeline-event-content">
+                        <div class="timeline-event-title">
+                            {{ record.get_status_display }}
+                        </div>
+                        <div class="text-muted">{{ record.description }}</div>
+                        <div class="text-muted">
+                            <small>
+                                {{ record.location }} - 
+                                {{ record.tracking_time|date:"Y-m-d H:i:s" }} - 
+                                {{ record.operator|default:_('系统') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted">{% trans '暂无物流轨迹' %}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

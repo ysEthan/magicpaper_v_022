@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans '包裹详情' %} - {{ package.tracking_no|default:package.id }}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{% trans '包裹详情' %}</h2>
+                <div class="text-muted mt-1">{{ package.tracking_no|default:package.id }}</div>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-tracking">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        {% trans '添加轨迹' %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Basic info -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans '基本信息' %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '订单号' %}</label>
+                        <div class="form-control-plaintext">{{ package.order.order_number }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '运单号' %}</label>
+                        <div class="form-control-plaintext">{{ package.tracking_no|default:'-' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '物流商' %}</label>
+                        <div class="form-control-plaintext">{{ package.carrier_name }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '物流服务' %}</label>
+                        <div class="form-control-plaintext">{{ package.service_name }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '发货仓库' %}</label>
+                        <div class="form-control-plaintext">{{ package.warehouse|default:'-' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '包裹状态' %}</label>
+                        <div class="form-control-plaintext">
+                            <span class="badge 
+                                {% if package.pkg_status_code == '0' %}bg-yellow{% endif %}
+                                {% if package.pkg_status_code == '1' %}bg-blue{% endif %}
+                                {% if package.pkg_status_code == '2' %}bg-purple{% endif %}
+                                {% if package.pkg_status_code == '3' %}bg-green{% endif %}
+                                {% if package.pkg_status_code == '4' %}bg-red{% endif %}">
+                                {{ package.get_pkg_status_code_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Package info -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans '包裹信息' %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '长' %}</label>
+                        <div class="form-control-plaintext">{{ package.length|default:'-' }} cm</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '宽' %}</label>
+                        <div class="form-control-plaintext">{{ package.width|default:'-' }} cm</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '高' %}</label>
+                        <div class="form-control-plaintext">{{ package.height|default:'-' }} cm</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '重量' %}</label>
+                        <div class="form-control-plaintext">{{ package.weight|default:'-' }} kg</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '体积' %}</label>
+                        <div class="form-control-plaintext">{{ package.volume|default:'-' }} cm³</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '体积重' %}</label>
+                        <div class="form-control-plaintext">{{ package.volume_weight|default:'-' }} kg</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost info -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans '费用信息' %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '预估费用' %}</label>
+                        <div class="form-control-plaintext">{{ package.estimated_logistics_cost }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans '物流商费用' %}</label>
+                        <div class="form-control-plaintext">{{ package.carrier_cost|default:'-' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <!-- Tracking records -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans '物流轨迹' %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for record in tracking_records %}
+                        <div class="timeline-event">
+                            <div class="timeline-event-icon 
+                                {% if record.status == 0 %}bg-yellow{% endif %}
+                                {% if record.status == 1 %}bg-blue{% endif %}
+                                {% if record.status == 2 %}bg-purple{% endif %}
+                                {% if record.status == 3 %}bg-green{% endif %}
+                                {% if record.status == 4 %}bg-red{% endif %}">
+                                <!-- Timeline icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <circle cx="12" cy="12" r="9" />
+                                    <polyline points="12 7 12 12 15 15" />
+                                </svg>
+                            </div>
+                            <div class="timeline-event-content">
+                                <div class="timeline-event-title">
+                                    {{ record.get_status_display }}
+                                </div>
+                                <div class="text-muted">{{ record.description }}</div>
+                                <div class="text-muted">
+                                    <small>
+                                        {{ record.location }} - 
+                                        {{ record.tracking_time|date:"Y-m-d H:i:s" }} - 
+                                        {{ record.operator|default:_('系统') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted">{% trans '暂无物流轨迹' %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add tracking modal -->
+<div class="modal modal-blur fade" id="modal-tracking" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans '添加物流轨迹' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'logistics:package_detail' package.pk %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '物流状态' %}</label>
+                        <select class="form-select" name="status" required>
+                            {% for code, name in package.STATUS_CHOICES %}
+                            <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '当前位置' %}</label>
+                        <input type="text" class="form-control" name="location" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '轨迹描述' %}</label>
+                        <input type="text" class="form-control" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label required">{% trans '轨迹时间' %}</label>
+                        <input type="datetime-local" class="form-control" name="tracking_time" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">{% trans '取消' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans '保存' %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 
