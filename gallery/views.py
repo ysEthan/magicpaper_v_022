@@ -7,17 +7,26 @@ from .sync import ProductSync
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 # Brand views
 @login_required
 def brand_list(request):
     brands = Brand.objects.all()
-    return render(request, 'gallery/brand/list.html', {'brands': brands})
+    return render(request, 'gallery/brand/list.html', {
+        'brands': brands,
+        'active_menu': 'gallery',
+        'active_submenu': 'brand'
+    })
 
 @login_required
 def brand_detail(request, pk):
     brand = get_object_or_404(Brand, pk=pk)
-    return render(request, 'gallery/brand/detail.html', {'brand': brand})
+    return render(request, 'gallery/brand/detail.html', {
+        'brand': brand,
+        'active_menu': 'gallery',
+        'active_submenu': 'brand'
+    })
 
 @login_required
 def brand_edit(request, pk=None):
@@ -34,6 +43,8 @@ def brand_edit(request, pk=None):
     return render(request, 'gallery/brand/edit.html', {
         'form': form,
         'brand': brand,
+        'active_menu': 'gallery',
+        'active_submenu': 'brand'
     })
 
 @login_required
@@ -43,18 +54,30 @@ def brand_delete(request, pk):
         brand.delete()
         messages.success(request, '品牌删除成功！')
         return redirect('gallery:brand_list')
-    return render(request, 'gallery/brand/delete.html', {'brand': brand})
+    return render(request, 'gallery/brand/delete.html', {
+        'brand': brand,
+        'active_menu': 'gallery',
+        'active_submenu': 'brand'
+    })
 
 # Category views
 @login_required
 def category_list(request):
     categories = Category.objects.all()
-    return render(request, 'gallery/category/list.html', {'categories': categories})
+    return render(request, 'gallery/category/list.html', {
+        'categories': categories,
+        'active_menu': 'gallery',
+        'active_submenu': 'category'
+    })
 
 @login_required
 def category_detail(request, pk):
     category = get_object_or_404(Category, pk=pk)
-    return render(request, 'gallery/category/detail.html', {'category': category})
+    return render(request, 'gallery/category/detail.html', {
+        'category': category,
+        'active_menu': 'gallery',
+        'active_submenu': 'category'
+    })
 
 @login_required
 def category_edit(request, pk=None):
@@ -71,6 +94,8 @@ def category_edit(request, pk=None):
     return render(request, 'gallery/category/edit.html', {
         'form': form,
         'category': category,
+        'active_menu': 'gallery',
+        'active_submenu': 'category'
     })
 
 @login_required
@@ -80,18 +105,30 @@ def category_delete(request, pk):
         category.delete()
         messages.success(request, '分类删除成功！')
         return redirect('gallery:category_list')
-    return render(request, 'gallery/category/delete.html', {'category': category})
+    return render(request, 'gallery/category/delete.html', {
+        'category': category,
+        'active_menu': 'gallery',
+        'active_submenu': 'category'
+    })
 
 # SPU views
 @login_required
 def spu_list(request):
     spus = SPU.objects.all()
-    return render(request, 'gallery/spu/list.html', {'spus': spus})
+    return render(request, 'gallery/spu/list.html', {
+        'spus': spus,
+        'active_menu': 'gallery',
+        'active_submenu': 'spu'
+    })
 
 @login_required
 def spu_detail(request, pk):
     spu = get_object_or_404(SPU, pk=pk)
-    return render(request, 'gallery/spu/detail.html', {'spu': spu})
+    return render(request, 'gallery/spu/detail.html', {
+        'spu': spu,
+        'active_menu': 'gallery',
+        'active_submenu': 'spu'
+    })
 
 @login_required
 def spu_edit(request, pk=None):
@@ -108,6 +145,8 @@ def spu_edit(request, pk=None):
     return render(request, 'gallery/spu/edit.html', {
         'form': form,
         'spu': spu,
+        'active_menu': 'gallery',
+        'active_submenu': 'spu'
     })
 
 @login_required
@@ -117,7 +156,11 @@ def spu_delete(request, pk):
         spu.delete()
         messages.success(request, 'SPU删除成功！')
         return redirect('gallery:spu_list')
-    return render(request, 'gallery/spu/delete.html', {'spu': spu})
+    return render(request, 'gallery/spu/delete.html', {
+        'spu': spu,
+        'active_menu': 'gallery',
+        'active_submenu': 'spu'
+    })
 
 # SKU views
 @login_required
@@ -206,6 +249,8 @@ def sku_list(request):
         'is_paginated': page_obj.has_other_pages(),
         'page_obj': page_obj,
         'paginator': paginator,
+        'active_menu': 'gallery',
+        'active_submenu': 'sku'
     }
 
     return render(request, 'gallery/sku/list.html', context)
@@ -213,7 +258,11 @@ def sku_list(request):
 @login_required
 def sku_detail(request, pk):
     sku = get_object_or_404(SKU, pk=pk)
-    return render(request, 'gallery/sku/detail.html', {'sku': sku})
+    return render(request, 'gallery/sku/detail.html', {
+        'sku': sku,
+        'active_menu': 'gallery',
+        'active_submenu': 'sku'
+    })
 
 @login_required
 def sku_edit(request, pk=None):
@@ -230,6 +279,8 @@ def sku_edit(request, pk=None):
     return render(request, 'gallery/sku/edit.html', {
         'form': form,
         'sku': sku,
+        'active_menu': 'gallery',
+        'active_submenu': 'sku'
     })
 
 @login_required
@@ -239,7 +290,11 @@ def sku_delete(request, pk):
         sku.delete()
         messages.success(request, 'SKU删除成功！')
         return redirect('gallery:sku_list')
-    return render(request, 'gallery/sku/delete.html', {'sku': sku})
+    return render(request, 'gallery/sku/delete.html', {
+        'sku': sku,
+        'active_menu': 'gallery',
+        'active_submenu': 'sku'
+    })
 
 @login_required
 def sync_products(request):
@@ -248,5 +303,80 @@ def sync_products(request):
         count = sync.sync_products()
         messages.success(request, f'成功同步 {count} 个商品')
     except Exception as e:
-        messages.error(request, f'同步失败: {str(e)}')
+        messages.error(request, f'同步失败：{str(e)}')
     return redirect('gallery:sku_list')
+
+@login_required
+def report(request):
+    """商品报表页面"""
+    today = timezone.now()
+    month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # 总体统计
+    total_products = SPU.objects.count()
+    new_products_today = SPU.objects.filter(created_at__date=today.date()).count()
+    new_products_month = SPU.objects.filter(created_at__gte=month_start).count()
+    
+    # 计算活跃商品（有库存或有销量的商品）
+    active_products = SPU.objects.filter(
+        Q(sku__inventories__quantity__gt=0) |
+        Q(sku__order_items__isnull=False)
+    ).distinct().count()
+    
+    # 计算缺货商品
+    out_of_stock = SPU.objects.filter(
+        sku__inventories__quantity=0
+    ).distinct().count()
+    
+    # 计算百分比
+    active_products_percentage = round((active_products / total_products * 100) if total_products > 0 else 0, 1)
+    out_of_stock_percentage = round((out_of_stock / total_products * 100) if total_products > 0 else 0, 1)
+    
+    # 计算环比（与上月相比的增长率）
+    last_month_start = month_start.replace(month=month_start.month-1 if month_start.month > 1 else 12)
+    last_month_new = SPU.objects.filter(
+        created_at__gte=last_month_start,
+        created_at__lt=month_start
+    ).count()
+    month_over_month = round(
+        ((new_products_month - last_month_new) / last_month_new * 100) if last_month_new > 0 else 0,
+        1
+    )
+    
+    # 按品牌统计
+    brands = Brand.objects.annotate(
+        total_products=Count('spu', distinct=True),
+        active_products=Count(
+            'spu',
+            filter=Q(spu__sku__inventories__quantity__gt=0) |
+                   Q(spu__sku__order_items__isnull=False),
+            distinct=True
+        ),
+        new_products=Count(
+            'spu',
+            filter=Q(spu__created_at__gte=month_start),
+            distinct=True
+        ),
+        out_of_stock=Count(
+            'spu',
+            filter=Q(spu__sku__inventories__quantity=0),
+            distinct=True
+        )
+    )
+    
+    context = {
+        'total_products': total_products,
+        'new_products_today': new_products_today,
+        'new_products_month': new_products_month,
+        'active_products': active_products,
+        'active_products_percentage': active_products_percentage,
+        'out_of_stock': out_of_stock,
+        'out_of_stock_percentage': out_of_stock_percentage,
+        'month_over_month': month_over_month,
+        'brands': brands,
+        'current_month': today.strftime('%Y年%m月'),
+        'active_menu': 'gallery',
+        'active_submenu': 'report'
+    }
+    
+    return render(request, 'gallery/report.html', context)

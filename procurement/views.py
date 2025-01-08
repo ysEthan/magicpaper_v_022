@@ -10,6 +10,8 @@ from django.views.decorators.csrf import csrf_protect
 from .models import Supplier, PurchaseOrder, PurchaseOrderItem
 from .forms import SupplierForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from .sync import sync_all_purchase
+from django.db.models import Count, Sum, F, Q
+from django.utils import timezone
 
 
 class SupplierListView(LoginRequiredMixin, ListView):
@@ -24,6 +26,12 @@ class SupplierListView(LoginRequiredMixin, ListView):
         if search_query:
             queryset = queryset.filter(name__icontains=search_query)
         return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'supplier'
+        return context
 
 
 class SupplierDetailView(LoginRequiredMixin, DetailView):
@@ -31,12 +39,24 @@ class SupplierDetailView(LoginRequiredMixin, DetailView):
     template_name = 'procurement/supplier_detail.html'
     context_object_name = 'supplier'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'supplier'
+        return context
+
 
 class SupplierCreateView(LoginRequiredMixin, CreateView):
     model = Supplier
     form_class = SupplierForm
     template_name = 'procurement/supplier_form.html'
     success_url = reverse_lazy('procurement:supplier_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'supplier'
+        return context
 
     def form_valid(self, form):
         messages.success(self.request, '供应商创建成功！')
@@ -48,6 +68,12 @@ class SupplierUpdateView(LoginRequiredMixin, UpdateView):
     form_class = SupplierForm
     template_name = 'procurement/supplier_form.html'
     success_url = reverse_lazy('procurement:supplier_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'supplier'
+        return context
 
     def form_valid(self, form):
         messages.success(self.request, '供应商更新成功！')
@@ -71,6 +97,12 @@ class PurchaseOrderListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(status=status_filter)
         return queryset
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'order'
+        return context
+
 
 class PurchaseOrderDetailView(LoginRequiredMixin, DetailView):
     model = PurchaseOrder
@@ -80,6 +112,8 @@ class PurchaseOrderDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['items'] = self.object.purchaseorderitem_set.all()
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'order'
         return context
 
 
@@ -95,6 +129,8 @@ class PurchaseOrderCreateView(LoginRequiredMixin, CreateView):
             context['items_formset'] = PurchaseOrderItemFormSet(self.request.POST)
         else:
             context['items_formset'] = PurchaseOrderItemFormSet()
+        context['active_menu'] = 'procurement'
+        context['active_submenu'] = 'order'
         return context
 
     def form_valid(self, form):
@@ -151,3 +187,70 @@ def sync_purchase_orders(request):
         messages.error(request, f'同步过程中发生错误：{str(e)}')
     
     return redirect('procurement:purchase_order_list')
+
+
+@login_required
+def report(request):
+    """采购报表页面"""
+    today = timezone.now()
+    month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    # 总体统计
+    total_orders = PurchaseOrder.objects.count()
+    new_orders_today = PurchaseOrder.objects.filter(created_at__date=today.date()).count()
+    
+    # 进行中的采购单（未完成或未关闭的）
+    active_orders = PurchaseOrder.objects.filter(
+        status__in=['draft', 'submitted', 'approved', 'processing']
+    ).count()
+    
+    # 计算本月采购金额
+    month_amount = PurchaseOrder.objects.filter(
+        created_at__gte=month_start
+    ).aggregate(
+        total=Sum(F('purchaseorderitem__quantity') * F('purchaseorderitem__unit_price'))
+    )['total'] or 0
+    
+    # 计算百分比
+    active_orders_percentage = round((active_orders / total_orders * 100) if total_orders > 0 else 0, 1)
+    
+    # 计算环比（与上月相比的增长率）
+    last_month_start = month_start.replace(month=month_start.month-1 if month_start.month > 1 else 12)
+    last_month_amount = PurchaseOrder.objects.filter(
+        created_at__gte=last_month_start,
+        created_at__lt=month_start
+    ).aggregate(
+        total=Sum(F('purchaseorderitem__quantity') * F('purchaseorderitem__unit_price'))
+    )['total'] or 0
+    month_over_month = round(
+        ((month_amount - last_month_amount) / last_month_amount * 100) if last_month_amount > 0 else 0,
+        1
+    )
+    
+    # 按供应商统计
+    suppliers = Supplier.objects.annotate(
+        total_orders=Count('purchaseorder'),
+        active_orders=Count(
+            'purchaseorder',
+            filter=Q(purchaseorder__status__in=['draft', 'submitted', 'approved', 'processing'])
+        ),
+        month_amount=Sum(
+            F('purchaseorder__purchaseorderitem__quantity') * F('purchaseorder__purchaseorderitem__unit_price'),
+            filter=Q(purchaseorder__created_at__gte=month_start)
+        )
+    )
+    
+    context = {
+        'total_orders': total_orders,
+        'new_orders_today': new_orders_today,
+        'active_orders': active_orders,
+        'active_orders_percentage': active_orders_percentage,
+        'month_amount': month_amount,
+        'month_over_month': month_over_month,
+        'suppliers': suppliers,
+        'current_month': today.strftime('%Y年%m月'),
+        'active_menu': 'procurement',
+        'active_submenu': 'report'
+    }
+    
+    return render(request, 'procurement/report.html', context)

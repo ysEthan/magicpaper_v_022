@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">商品报表</h2>
+                <div class="text-muted mt-1">{{ current_month }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 总体统计 -->
+    <div class="row row-cards mt-3">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">总商品数</div>
+                    </div>
+                    <div class="h1 mb-3">{{ total_products }}</div>
+                    <div class="d-flex mb-2">
+                        <div>本月新增</div>
+                        <div class="ms-auto">
+                            <span class="text-green d-inline-flex align-items-center lh-1">
+                                {{ month_over_month }}% <svg xmlns="http://www.w3.org/2000/svg" class="icon ms-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8" /><path d="M14 7l7 0l0 7" /></svg>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-primary" style="width: 100%" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" aria-label="100% Complete">
+                            <span class="visually-hidden">100% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">活跃商品</div>
+                    </div>
+                    <div class="h1 mb-3">{{ active_products }}</div>
+                    <div class="d-flex mb-2">
+                        <div>占比</div>
+                        <div class="ms-auto">
+                            <span class="text-green d-inline-flex align-items-center lh-1">
+                                {{ active_products_percentage }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-green" style="width: {{ active_products_percentage }}%" role="progressbar" aria-valuenow="{{ active_products_percentage }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ active_products_percentage }}% Complete">
+                            <span class="visually-hidden">{{ active_products_percentage }}% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">缺货商品</div>
+                    </div>
+                    <div class="h1 mb-3">{{ out_of_stock }}</div>
+                    <div class="d-flex mb-2">
+                        <div>占比</div>
+                        <div class="ms-auto">
+                            <span class="text-yellow d-inline-flex align-items-center lh-1">
+                                {{ out_of_stock_percentage }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-yellow" style="width: {{ out_of_stock_percentage }}%" role="progressbar" aria-valuenow="{{ out_of_stock_percentage }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ out_of_stock_percentage }}% Complete">
+                            <span class="visually-hidden">{{ out_of_stock_percentage }}% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">今日新增</div>
+                    </div>
+                    <div class="h1 mb-3">{{ new_products_today }}</div>
+                    <div class="d-flex mb-2">
+                        <div>本月新增</div>
+                        <div class="ms-auto">
+                            <span class="text-blue d-inline-flex align-items-center lh-1">
+                                {{ new_products_month }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-blue" style="width: {{ new_products_month|default:0|floatformat:0 }}%" role="progressbar" aria-valuenow="{{ new_products_month|default:0|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100">
+                            <span class="visually-hidden">{{ new_products_month|default:0|floatformat:0 }}% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 品牌统计 -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">品牌统计</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table card-table table-vcenter text-nowrap datatable">
+                        <thead>
+                            <tr>
+                                <th>品牌名称</th>
+                                <th>商品总数</th>
+                                <th>活跃商品</th>
+                                <th>本月新增</th>
+                                <th>缺货商品</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for brand in brands %}
+                            <tr>
+                                <td>{{ brand.name }}</td>
+                                <td>{{ brand.total_products }}</td>
+                                <td>{{ brand.active_products }}</td>
+                                <td>{{ brand.new_products }}</td>
+                                <td>{{ brand.out_of_stock }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

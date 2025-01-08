@@ -19,23 +19,31 @@
             </svg>
         </span>
         <span class="nav-link-title">
-            Gallery
+            商品管理
         </span>
     </a>
     <div class="dropdown-menu {% if active_menu == 'gallery' %}show{% endif %}">
         <div class="dropdown-menu-columns">
             <div class="dropdown-menu-column">
+                <a class="dropdown-item {% if active_submenu == 'report' %}active{% endif %}" 
+                   href="{% url 'gallery:report' %}">
+                    商品报表
+                </a>
                 <a class="dropdown-item {% if active_submenu == 'category' %}active{% endif %}" 
                    href="{% url 'gallery:category_list' %}">
-                    Category
+                    分类管理
+                </a>
+                <a class="dropdown-item {% if active_submenu == 'brand' %}active{% endif %}" 
+                   href="{% url 'gallery:brand_list' %}">
+                    品牌管理
                 </a>
                 <a class="dropdown-item {% if active_submenu == 'spu' %}active{% endif %}" 
                    href="{% url 'gallery:spu_list' %}">
-                    SPU
+                    SPU管理
                 </a>
                 <a class="dropdown-item {% if active_submenu == 'sku' %}active{% endif %}" 
                    href="{% url 'gallery:sku_list' %}">
-                    SKU
+                    SKU管理
                 </a>
             </div>
         </div>

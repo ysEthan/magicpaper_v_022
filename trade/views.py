@@ -11,6 +11,10 @@ from django.utils.decorators import method_decorator
 from .models import Order, Shop, Cart
 from .services import WDTOrderSync
 import logging
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -151,3 +155,109 @@ class SyncOrdersView(View):
             messages.error(request, f"同步失败: {str(e)}")
             
         return redirect('order_list')
+
+@login_required
+def report(request):
+    """订单报表"""
+    today = timezone.now()
+    month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_month_start = (month_start - timedelta(days=1)).replace(day=1)
+    current_month = today.strftime("%Y年%m月")
+
+    # 获取所有非取消订单
+    active_orders = Order.objects.exclude(status='cancelled')
+    
+    # 订单总数（不含已取消）
+    total_orders = active_orders.count()
+    
+    # 今日新增订单（不含已取消）
+    new_orders_today = active_orders.filter(
+        order_place_time__date=today.date()
+    ).count()
+
+    # 待发货订单（不含已取消）
+    pending_orders = active_orders.filter(
+        status__in=['pending', 'picking']  # 包含待处理和配货中的订单
+    ).count()
+    pending_orders_percentage = round(pending_orders / total_orders * 100 if total_orders > 0 else 0, 1)
+
+    # 本月销售额（不含已取消）
+    month_amount = active_orders.filter(
+        order_place_time__gte=month_start
+    ).aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+
+    # 上月销售额（不含已取消）
+    last_month_amount = active_orders.filter(
+        order_place_time__gte=last_month_start,
+        order_place_time__lt=month_start
+    ).aggregate(
+        total=Sum('total_amount')
+    )['total'] or 0
+
+    # 计算环比
+    month_over_month = round((month_amount - last_month_amount) / last_month_amount * 100 if last_month_amount > 0 else 0, 1)
+
+    # 获取最近21天的订单趋势（不含已取消）
+    trend_dates = []
+    trend_counts = []
+    
+    for i in range(20, -1, -1):
+        date = today - timedelta(days=i)
+        date_str = date.strftime('%Y-%m-%d')
+        orders = active_orders.filter(order_place_time__date=date.date())
+        count = orders.count()
+        
+        trend_dates.append(date_str)
+        trend_counts.append(count)
+
+    # 按订单状态统计（不含已取消）
+    status_stats = []
+    total_amount = active_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    for status, name in Order.ORDER_STATUS_CHOICES:
+        if status != 'cancelled':  # 排除已取消状态
+            orders = active_orders.filter(status=status)
+            count = orders.count()
+            amount = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+            percentage = round(count / total_orders * 100 if total_orders > 0 else 0, 1)
+            
+            status_stats.append({
+                'name': name,
+                'count': count,
+                'amount': amount,
+                'percentage': percentage
+            })
+
+    # 按支付方式统计（不含已取消）
+    payment_stats = []
+    for method, name in Order.PAYMENT_METHOD_CHOICES:
+        orders = active_orders.filter(payment_method=method)
+        count = orders.count()
+        amount = orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        percentage = round(count / total_orders * 100 if total_orders > 0 else 0, 1)
+        
+        payment_stats.append({
+            'name': name,
+            'count': count,
+            'amount': amount,
+            'percentage': percentage
+        })
+
+    context = {
+        'current_month': current_month,
+        'total_orders': total_orders,
+        'new_orders_today': new_orders_today,
+        'pending_orders': pending_orders,
+        'pending_orders_percentage': pending_orders_percentage,
+        'month_amount': month_amount,
+        'month_over_month': month_over_month,
+        'trend_dates': json.dumps(trend_dates),
+        'trend_counts': json.dumps(trend_counts),
+        'order_status': status_stats,
+        'payment_methods': payment_stats,
+        'active_menu': 'trade_report'
+    }
+
+    return render(request, 'trade/report.html', context)

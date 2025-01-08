@@ -18,4 +18,5 @@ urlpatterns = [
     
     # 同步功能
     path('sync/orders/', views.sync_purchase_orders, name='sync_purchase_orders'),
+    path('report/', views.report, name='report'),
 ] 

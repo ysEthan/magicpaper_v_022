@@ -24,21 +24,7 @@ class WDTOrderSync:
         self.app_name = "mathmagic"
         self.app_key = "82be0592545283da00744b489f758f99"
         self.sid = "mathmagic"
-        self._default_warehouse = None
         self._default_service = None
-
-    def _get_default_warehouse(self):
-        """获取默认仓库"""
-        if not self._default_warehouse:
-            self._default_warehouse, _ = Warehouse.objects.get_or_create(
-                warehouse_code='WDT_DEFAULT',
-                defaults={
-                    'warehouse_name': '旺店通默认仓库',
-                    'location': '默认地址',
-                    'status': True
-                }
-            )
-        return self._default_warehouse
 
     def _get_default_service(self):
         """获取默认物流服务"""
@@ -183,8 +169,7 @@ class WDTOrderSync:
             result['total'] = len(orders_data)
             logger.info(f"开始同步订单，当前页：{current_page}，本页数据：{result['total']}，总订单数：{total_orders}")
 
-            # 获取默认仓库和物流服务
-            default_warehouse = self._get_default_warehouse()
+            # 获取默认物流服务
             default_service = self._get_default_service()
 
             if not default_service:
@@ -257,6 +242,12 @@ class WDTOrderSync:
                         continue
 
                     logger.info(f"订单 {order_number} 不存在，开始创建新订单")
+
+                    # 检查仓库信息
+                    warehouse = self._get_warehouse_by_code(order_data.get('warehouseNo'))
+                    if not warehouse:
+                        logger.warning(f"订单 {order_number} 找不到对应的仓库信息(warehouseNo: {order_data.get('warehouseNo')}), 跳过该订单")
+                        continue
 
                     # 获取或创建店铺
                     shop_code = order_data.get('shopNo')
@@ -339,15 +330,10 @@ class WDTOrderSync:
 
                         # 创建包裹
                         service = self._get_service_by_name(order_data.get('logisticsText'))
-                        warehouse = self._get_warehouse_by_code(order_data.get('warehouseNo'))
                         
-                        if not warehouse:
-                            logger.error(f"订单 {order_number} 无法创建包裹：找不到对应的仓库")
-                            continue
-                            
                         package = Package(
                             order=order,
-                            warehouse=warehouse,
+                            warehouse=warehouse,  # 使用之前验证过的仓库
                             service=service,  # 可以为None
                             tracking_no=order_data.get('logisticsNo', ''),
                             pkg_status_code='0',  # 待发货
@@ -401,12 +387,16 @@ class WDTOrderSync:
             return None
         
         try:
-            # 通过编号精确匹配
-            warehouse = Warehouse.objects.filter(id=warehouse_code).first()
+            # 尝试将仓库编号转换为整数ID
+            warehouse_id = int(warehouse_code)
+            warehouse = Warehouse.objects.filter(id=warehouse_id).first()
             if warehouse:
                 return warehouse
             
-            logger.error(f"找不到匹配的仓库ID: {warehouse_code}")
+            logger.error(f"找不到匹配的仓库ID: {warehouse_id}")
+            return None
+        except (ValueError, TypeError):
+            logger.error(f"无效的仓库ID格式: {warehouse_code}")
             return None
         except Exception as e:
             logger.error(f"查找仓库失败: {str(e)}")

@@ -153,14 +153,13 @@ def update_stock_in_data(stock_in_data):
                     skipped_count += 1
                     continue
                 
-                # 获取或创建仓库
-                warehouse, _ = Warehouse.objects.get_or_create(
-                    warehouse_code=item['warehouseNo'],
-                    defaults={
-                        'warehouse_name': item['warehouseName'],
-                        'status': True
-                    }
-                )
+                # 尝试获取仓库，如果不存在则跳过
+                try:
+                    warehouse = Warehouse.objects.get(id=warehouse_id)
+                except Warehouse.DoesNotExist:
+                    logger.error(f"仓库不存在，跳过处理: warehouse_id={warehouse_id}, warehouse_name={item['warehouseName']}")
+                    skipped_count += 1
+                    continue
                 
                 # 检查入库单是否已存在
                 stock_in_code = item['stockinNo']
@@ -402,14 +401,13 @@ def update_stock_out_data(stock_out_data):
                         skipped_count += 1
                         continue
 
-                    # 获取或创建仓库
-                    warehouse, _ = Warehouse.objects.get_or_create(
-                        warehouse_code=item['warehouseNo'],
-                        defaults={
-                            'warehouse_name': item['warehouseName'],
-                            'status': True
-                        }
-                    )
+                    # 获取仓库
+                    try:
+                        warehouse = Warehouse.objects.get(id=warehouse_id)
+                    except Warehouse.DoesNotExist:
+                        logger.error(f"仓库不存在，跳过处理: warehouse_id={warehouse_id}, warehouse_name={item['warehouseName']}")
+                        skipped_count += 1
+                        continue
                     
                     # 检查出库单是否已处理
                     stock_out_no = item.get('stockoutNo')  # 修改字段名
@@ -457,13 +455,17 @@ def update_stock_out_data(stock_out_data):
                             available_inventory = (
                                 Inventory.objects
                                 .select_for_update()  # 添加行锁
-                                .filter(warehouse=warehouse, sku=sku, quantity__gt=0)
+                                .filter(
+                                    warehouse=warehouse,
+                                    sku=sku,
+                                    quantity__gt=0
+                                )
                                 .order_by('created_at')
                                 .first()
                             )
                             
                             if not available_inventory:
-                                logger.warning(f"无可用库存，跳过: {stock_out_no}, SKU: {sku_code}")
+                                logger.warning(f"无可用库存，跳过: {stock_out_no}, SKU: {sku_code}, 仓库ID: {warehouse_id}")
                                 continue
                             
                             # 检查库存是否足够

@@ -19,17 +19,28 @@
             </svg>
         </span>
         <span class="nav-link-title">
-            Storage
+            仓储管理
         </span>
     </a>
     <div class="dropdown-menu {% if active_menu == 'storage' %}show{% endif %}">
         <div class="dropdown-menu-columns">
             <div class="dropdown-menu-column">
-                <a class="dropdown-item {% if active_submenu == 'stock' %}active{% endif %}"
-                   href="{% url 'storage:stock_list' %}">
-                    Stock
+                <a class="dropdown-item {% if active_submenu == 'report' %}active{% endif %}"
+                   href="{% url 'storage:report' %}">
+                    仓储报表
                 </a>
-
+                <a class="dropdown-item {% if active_submenu == 'inventory' %}active{% endif %}"
+                   href="{% url 'storage:inventory_list' %}">
+                    库存管理
+                </a>
+                <a class="dropdown-item {% if active_submenu == 'stock_in' %}active{% endif %}"
+                   href="{% url 'storage:stock_in_list' %}">
+                    入库管理
+                </a>
+                <a class="dropdown-item {% if active_submenu == 'stock_out' %}active{% endif %}"
+                   href="{% url 'storage:stock_out_list' %}">
+                    出库管理
+                </a>
             </div>
         </div>
     </div>

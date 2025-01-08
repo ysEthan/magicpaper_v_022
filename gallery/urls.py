@@ -34,4 +34,7 @@ urlpatterns = [
 
     # Sync URLs
     path('sync/', views.sync_products, name='sync_products'),
+
+    # Report URL
+    path('report/', views.report, name='report'),
 ] 

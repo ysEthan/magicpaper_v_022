@@ -19,4 +19,5 @@ urlpatterns = [
     
     # API endpoints
     path('api/services/<int:pk>/', views.service_update, name='service_update'),
+    path('report/', views.report, name='report'),
 ] 

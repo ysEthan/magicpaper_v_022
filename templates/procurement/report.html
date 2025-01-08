@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Procurement Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">采购报表 - {{ current_month }}</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 总体统计 -->
+                    <div class="row mb-4">
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">采购单总数</h3>
+                                    <div class="h1">{{ total_orders }}</div>
+                                    <div class="text-muted">今日新增: {{ new_orders_today }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">进行中采购单</h3>
+                                    <div class="h1">{{ active_orders }}</div>
+                                    <div class="text-muted">占比: {{ active_orders_percentage }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">本月采购金额</h3>
+                                    <div class="h1">¥{{ month_amount|floatformat:2 }}</div>
+                                    <div class="text-muted">环比: {{ month_over_month }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 按供应商统计 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>按供应商统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">供应商</th>
+                                                    <th class="text-center">采购单数</th>
+                                                    <th class="text-center">进行中订单</th>
+                                                    <th class="text-center">本月采购额</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for supplier in suppliers %}
+                                                <tr>
+                                                    <td>{{ supplier.name }}</td>
+                                                    <td class="text-right">{{ supplier.total_orders }}</td>
+                                                    <td class="text-right">{{ supplier.active_orders }}</td>
+                                                    <td class="text-right">¥{{ supplier.month_amount|floatformat:2 }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any JavaScript needed for the report page
+</script>
+{% endblock %} 

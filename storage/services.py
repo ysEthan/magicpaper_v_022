@@ -16,19 +16,6 @@ class WDTStockInSyncService:
         self.base_url = settings.WDT_API_URL
         self.sid = settings.WDT_SID
         self.appkey = settings.WDT_APPKEY
-        self.default_warehouse = None
-    
-    def _get_default_warehouse(self):
-        """获取默认仓库"""
-        if not self.default_warehouse:
-            self.default_warehouse, _ = Warehouse.objects.get_or_create(
-                warehouse_code='WDT_DEFAULT',
-                defaults={
-                    'warehouse_name': '旺店通默认仓库',
-                    'status': True
-                }
-            )
-        return self.default_warehouse
     
     def _call_api(self, api_name, params):
         """调用旺店通API"""
@@ -104,7 +91,12 @@ class WDTStockInSyncService:
                 return
             
             # 获取仓库
-            warehouse = self._get_default_warehouse()
+            warehouse_code = record.get('warehouse_no')
+            try:
+                warehouse = Warehouse.objects.get(id=int(warehouse_code))
+            except (ValueError, TypeError, Warehouse.DoesNotExist):
+                logger.warning(f"找不到仓库，跳过记录: warehouse_code={warehouse_code}")
+                return
             
             # 创建入库单
             stock_in_code = record.get('stock_in_no')

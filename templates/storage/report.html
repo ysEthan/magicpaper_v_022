@@ -32,13 +32,15 @@
                                             </thead>
                                             <tbody>
                                                 {% for warehouse in warehouses %}
-                                                <tr>
-                                                    <td class="align-middle">{{ warehouse.warehouse_name }}</td>
-                                                    <td class="text-right">{{ warehouse.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ warehouse.initial_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ warehouse.total_in|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_in_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ warehouse.total_out|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_out_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ warehouse.total_inventory|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_inventory_amount|default:0|floatformat:2 }}</span></td>
-                                                </tr>
+                                                    {% if warehouse.total_inventory > 0 %}
+                                                    <tr>
+                                                        <td class="align-middle">{{ warehouse.warehouse_name }}</td>
+                                                        <td class="text-right">{{ warehouse.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ warehouse.initial_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ warehouse.total_in|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_in_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ warehouse.total_out|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_out_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ warehouse.total_inventory|default:0 }}<br><span class="text-muted">¥{{ warehouse.total_inventory_amount|default:0|floatformat:2 }}</span></td>
+                                                    </tr>
+                                                    {% endif %}
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -67,13 +69,15 @@
                                             </thead>
                                             <tbody>
                                                 {% for brand in brands %}
-                                                <tr>
-                                                    <td class="align-middle">{{ brand.brand_name }}</td>
-                                                    <td class="text-right">{{ brand.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ brand.initial_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ brand.total_in|default:0 }}<br><span class="text-muted">¥{{ brand.total_in_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ brand.total_out|default:0 }}<br><span class="text-muted">¥{{ brand.total_out_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ brand.total_inventory|default:0 }}<br><span class="text-muted">¥{{ brand.total_inventory_amount|default:0|floatformat:2 }}</span></td>
-                                                </tr>
+                                                    {% if brand.total_inventory > 0 %}
+                                                    <tr>
+                                                        <td class="align-middle">{{ brand.brand_name }}</td>
+                                                        <td class="text-right">{{ brand.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ brand.initial_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ brand.total_in|default:0 }}<br><span class="text-muted">¥{{ brand.total_in_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ brand.total_out|default:0 }}<br><span class="text-muted">¥{{ brand.total_out_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ brand.total_inventory|default:0 }}<br><span class="text-muted">¥{{ brand.total_inventory_amount|default:0|floatformat:2 }}</span></td>
+                                                    </tr>
+                                                    {% endif %}
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -102,13 +106,15 @@
                                             </thead>
                                             <tbody>
                                                 {% for product_type in product_types %}
-                                                <tr>
-                                                    <td class="align-middle">{{ product_type.type_name }}</td>
-                                                    <td class="text-right">{{ product_type.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ product_type.initial_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ product_type.total_in|default:0 }}<br><span class="text-muted">¥{{ product_type.total_in_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ product_type.total_out|default:0 }}<br><span class="text-muted">¥{{ product_type.total_out_amount|default:0|floatformat:2 }}</span></td>
-                                                    <td class="text-right">{{ product_type.total_inventory|default:0 }}<br><span class="text-muted">¥{{ product_type.total_inventory_amount|default:0|floatformat:2 }}</span></td>
-                                                </tr>
+                                                    {% if product_type.total_inventory > 0 %}
+                                                    <tr>
+                                                        <td class="align-middle">{{ product_type.type_name }}</td>
+                                                        <td class="text-right">{{ product_type.initial_quantity|default:0 }}<br><span class="text-muted">¥{{ product_type.initial_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ product_type.total_in|default:0 }}<br><span class="text-muted">¥{{ product_type.total_in_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ product_type.total_out|default:0 }}<br><span class="text-muted">¥{{ product_type.total_out_amount|default:0|floatformat:2 }}</span></td>
+                                                        <td class="text-right">{{ product_type.total_inventory|default:0 }}<br><span class="text-muted">¥{{ product_type.total_inventory_amount|default:0|floatformat:2 }}</span></td>
+                                                    </tr>
+                                                    {% endif %}
                                                 {% endfor %}
                                             </tbody>
                                         </table>

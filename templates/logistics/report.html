@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Logistics Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">物流报表 - {{ current_month }}</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 总体统计 -->
+                    <div class="row mb-4">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">包裹总数</h3>
+                                    <div class="h1">{{ total_packages }}</div>
+                                    <div class="text-muted">今日新增: {{ new_packages_today }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">未完成包裹</h3>
+                                    <div class="h1">{{ pending_packages }}</div>
+                                    <div class="text-muted">占比: {{ pending_packages_percentage }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">本月运费</h3>
+                                    <div class="h1">¥{{ month_shipping_cost|floatformat:2 }}</div>
+                                    <div class="text-muted">环比: {{ month_over_month }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title">异常包裹</h3>
+                                    <div class="h1">{{ abnormal_packages }}</div>
+                                    <div class="text-muted">占比: {{ abnormal_packages_percentage }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 按物流商统计 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>按物流商统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">物流商</th>
+                                                    <th class="text-center">包裹数量</th>
+                                                    <th class="text-center">未完成包裹</th>
+                                                    <th class="text-center">本月运费</th>
+                                                    <th class="text-center">异常包裹</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for carrier in carriers %}
+                                                <tr>
+                                                    <td>{{ carrier.name }}</td>
+                                                    <td class="text-right">{{ carrier.total_packages }}</td>
+                                                    <td class="text-right">{{ carrier.pending_packages }}</td>
+                                                    <td class="text-right">¥{{ carrier.month_cost|floatformat:2 }}</td>
+                                                    <td class="text-right">{{ carrier.abnormal_packages }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 按包裹状态统计 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>按包裹状态统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">包裹状态</th>
+                                                    <th class="text-center">包裹数量</th>
+                                                    <th class="text-center">运费总额</th>
+                                                    <th class="text-center">占比</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for status in package_status %}
+                                                <tr>
+                                                    <td>{{ status.name }}</td>
+                                                    <td class="text-right">{{ status.count }}</td>
+                                                    <td class="text-right">¥{{ status.cost|floatformat:2 }}</td>
+                                                    <td class="text-right">{{ status.percentage }}%</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

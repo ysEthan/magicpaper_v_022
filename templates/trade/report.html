@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Trade Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">订单报表 - {{ current_month }}</h3>
+                </div>
+                <div class="card-body">
+                    <!-- 总体统计 -->
+                    <div class="row mb-4">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title mb-2">订单统计</h3>
+                                    <div class="h1 mb-1">{{ total_orders }}</div>
+                                    <div class="text-muted">今日新增: <strong class="h2 mb-0">{{ new_orders_today }}</strong> | 待发货: <strong class="text-danger h2 mb-0">{{ pending_orders }}</strong> ({{ pending_orders_percentage }}%)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title mb-2">本月销售额</h3>
+                                    <div class="h1 mb-1">¥{{ month_amount|floatformat:2 }}</div>
+                                    <div class="text-muted">环比: <strong class="h2 mb-0">{{ month_over_month }}%</strong></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 订单趋势图 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header py-2">
+                                    <h5 class="card-title mb-0">订单趋势</h5>
+                                </div>
+                                <div class="card-body pt-2">
+                                    <div id="order-trend-chart" style="height: 240px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 按订单状态统计 -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>按订单状态统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">订单状态</th>
+                                                    <th class="text-center">订单数量</th>
+                                                    <th class="text-center">订单金额</th>
+                                                    <th class="text-center">占比</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for status in order_status %}
+                                                <tr>
+                                                    <td>{{ status.name }}</td>
+                                                    <td class="text-right">{{ status.count }}</td>
+                                                    <td class="text-right">¥{{ status.amount|floatformat:2 }}</td>
+                                                    <td class="text-right">{{ status.percentage }}%</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 按支付方式统计 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>按支付方式统计</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th class="text-center">支付方式</th>
+                                                    <th class="text-center">订单数量</th>
+                                                    <th class="text-center">订单金额</th>
+                                                    <th class="text-center">占比</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for payment in payment_methods %}
+                                                <tr>
+                                                    <td>{{ payment.name }}</td>
+                                                    <td class="text-right">{{ payment.count }}</td>
+                                                    <td class="text-right">¥{{ payment.amount|floatformat:2 }}</td>
+                                                    <td class="text-right">{{ payment.percentage }}%</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    (function() {
+        var chartDom = document.getElementById('order-trend-chart');
+        var myChart = echarts.init(chartDom);
+        var option = {
+            tooltip: {
+                trigger: 'axis'
+            },
+            grid: {
+                left: '2%',
+                right: '5%',
+                top: '3%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: {{ trend_dates|safe }}
+            },
+            yAxis: {
+                type: 'value',
+                name: '订单数量'
+            },
+            series: [
+                {
+                    name: '订单数量',
+                    type: 'line',
+                    data: {{ trend_counts|safe }}
+                }
+            ]
+        };
+        myChart.setOption(option);
+
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    })();
+</script>
+{% endblock %} 

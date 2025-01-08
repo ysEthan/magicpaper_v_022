@@ -14,4 +14,5 @@ urlpatterns = [
     path('orders/<int:pk>/update/', views.OrderUpdateView.as_view(), name='order_update'),
     # 同步订单
     path('orders/sync/', views.sync_orders, name='order_sync'),
+    path('report/', views.report, name='report'),
 ] 
