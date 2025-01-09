@@ -18,6 +18,7 @@
     border: 1px solid rgba(98, 105, 118, 0.35) !important;
     box-shadow: rgba(35, 46, 60, 0.15) 0 4px 12px 0 !important;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
 }
 .card:hover {
     transform: translateY(-2px);
@@ -32,11 +33,11 @@
             <div class="row g-2">
                 <!-- 订单统计 -->
                 <div class="col-md-4">
-                    <div class="card h-100">
+                    <div class="card h-100" onclick="window.location.href='{% url 'trade:report' %}'">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">订单总数</div>
+                                    <div class="h3 mb-1">订单统计</div>
                                     <div class="total-value mb-1">{{ total_orders }}</div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
@@ -74,29 +75,29 @@
     </div>
                 <!-- 物流统计 -->
                 <div class="col-md-4">
-                    <div class="card h-100">
+                    <div class="card h-100" onclick="window.location.href='{% url 'logistics:report' %}'">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">未完成包裹</div>
-                                    <div class="total-value mb-1">{{ pending_packages }}</div>
+                                    <div class="h3 mb-1">包裹统计</div>
+                                    <div class="total-value mb-1">{{ total_packages }}</div>
                                     <div class="row g-2 align-items-center mt-2">
-                                                <div class="col-auto">
+                                        <div class="col-auto">
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">待揽收</span>
+                                                <span class="metric-value">{{ waiting_pickup_packages }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
                                             <span class="text-blue d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">本周新增</span>
-                                                <span class="metric-value">{{ week_packages|default:0 }}</span>
+                                                <span class="text-muted me-1">转运中</span>
+                                                <span class="metric-value">{{ in_transit_packages }}</span>
                                             </span>
                                         </div>
                                         <div class="col-auto ms-2">
                                             <span class="text-green d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">今日新增</span>
-                                                <span class="metric-value">{{ today_packages }}</span>
-                                            </span>
-                                        </div>
-                                        <div class="col-auto ms-2">
-                                            <span class="text-orange d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">处理中</span>
-                                                <span class="metric-value">{{ processing_packages }}</span>
+                                                <span class="text-muted me-1">已签收</span>
+                                                <span class="metric-value">{{ delivered_packages }}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -104,16 +105,16 @@
                                         <span class="text-blue d-inline-flex align-items-center">
                                             <span class="text-muted me-1">本月运费</span>
                                             <span class="metric-value amount-value">¥{{ month_shipping_cost|floatformat:2 }}</span>
-                                                    </span>
+                                        </span>
                                     </div>
-                                                </div>
-                                                <div class="col">
+                                </div>
+                                <div class="col">
                                     <div id="logistics-trend" style="height: 120px"></div>
                                 </div>
                             </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- 第一行第三列空白 -->
                 <div class="col-md-4">
                 </div>
@@ -127,21 +128,15 @@
                                     <div class="total-value mb-1">{{ total_products }}</div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
-                                            <span class="text-blue d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">本周新增</span>
-                                                <span class="metric-value">{{ new_products_week|default:0 }}</span>
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本月新增</span>
+                                                <span class="metric-value">{{ new_products_month }}</span>
                                             </span>
                                         </div>
                                         <div class="col-auto ms-2">
                                             <span class="text-green d-inline-flex align-items-center">
                                                 <span class="text-muted me-1">今日新增</span>
                                                 <span class="metric-value">{{ new_products_today }}</span>
-                                            </span>
-                                        </div>
-                                        <div class="col-auto ms-2">
-                                            <span class="text-orange d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">本月新增</span>
-                                                <span class="metric-value">{{ new_products_month }}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -163,15 +158,21 @@
                                     <div class="total-value mb-1">{{ total_inventory }}</div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
-                                            <span class="text-orange d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">低库存</span>
-                                                <span class="metric-value">{{ low_stock_count }}</span>
+                                            <span class="text-green d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本月入库</span>
+                                                <span class="metric-value">{{ month_stock_in }}</span>
                                             </span>
                                         </div>
                                         <div class="col-auto ms-2">
-                                            <span class="text-red d-inline-flex align-items-center">
-                                                <span class="text-muted me-1">缺货</span>
-                                                <span class="metric-value">{{ out_of_stock_count }}</span>
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本月出库</span>
+                                                <span class="metric-value">{{ month_stock_out }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-purple d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">周转率</span>
+                                                <span class="metric-value">{{ inventory_turnover|floatformat:2 }}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -191,7 +192,7 @@
                 </div>
                 <!-- 采购统计 -->
                 <div class="col-md-4">
-                    <div class="card h-100">
+                    <div class="card h-100" onclick="window.location.href='{% url 'procurement:report' %}'">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">

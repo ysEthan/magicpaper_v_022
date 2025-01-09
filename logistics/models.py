@@ -57,7 +57,6 @@ class Service(models.Model):
 class Package(models.Model):
     """包裹模型"""
     STATUS_CHOICES = [
-        ('0', _('待发货')),
         ('1', _('待揽收')),
         ('2', _('转运中')),
         ('3', _('已签收')),

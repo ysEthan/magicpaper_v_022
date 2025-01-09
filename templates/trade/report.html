@@ -34,84 +34,41 @@
                         </div>
                     </div>
 
-                    <!-- 订单趋势图 -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header py-2">
-                                    <h5 class="card-title mb-0">订单趋势</h5>
-                                </div>
-                                <div class="card-body pt-2">
-                                    <div id="order-trend-chart" style="height: 240px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 按订单状态统计 -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>按订单状态统计</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-center">订单状态</th>
-                                                    <th class="text-center">订单数量</th>
-                                                    <th class="text-center">订单金额</th>
-                                                    <th class="text-center">占比</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for status in order_status %}
-                                                <tr>
-                                                    <td>{{ status.name }}</td>
-                                                    <td class="text-right">{{ status.count }}</td>
-                                                    <td class="text-right">¥{{ status.amount|floatformat:2 }}</td>
-                                                    <td class="text-right">{{ status.percentage }}%</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 按支付方式统计 -->
+                    <!-- 订单趋势和类型统计 -->
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>按支付方式统计</h5>
+                                    <h5 class="card-title mb-0">订单分析</h5>
                                 </div>
                                 <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-center">支付方式</th>
-                                                    <th class="text-center">订单数量</th>
-                                                    <th class="text-center">订单金额</th>
-                                                    <th class="text-center">占比</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for payment in payment_methods %}
-                                                <tr>
-                                                    <td>{{ payment.name }}</td>
-                                                    <td class="text-right">{{ payment.count }}</td>
-                                                    <td class="text-right">¥{{ payment.amount|floatformat:2 }}</td>
-                                                    <td class="text-right">{{ payment.percentage }}%</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
+                                    <!-- 趋势图 -->
+                                    <div id="order-trend-chart" style="height: 240px;" class="mb-4"></div>
+                                    
+                                    <!-- 类型统计表格 -->
+                                    <div style="width: 60%; margin-left: 10px">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-center" style="width: 20%">订单类型</th>
+                                                        <th class="text-center" style="width: 15%">订单数量</th>
+                                                        <th class="text-center" style="width: 25%">订单金额</th>
+                                                        <th class="text-center" style="width: 15%">占比</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for type in order_types %}
+                                                    <tr>
+                                                        <td class="text-center">{{ type.name }}</td>
+                                                        <td class="text-center">{{ type.count }}</td>
+                                                        <td class="text-center">¥{{ type.amount|floatformat:2 }}</td>
+                                                        <td class="text-center">{{ type.percentage }}%</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

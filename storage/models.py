@@ -51,6 +51,18 @@ class Inventory(models.Model):
         validators=[MinValueValidator(0)],
         verbose_name='剩余数量'
     )
+    low_stock_threshold = models.IntegerField(
+        default=10,
+        validators=[MinValueValidator(0)],
+        verbose_name='低库存阈值'
+    )
+    unit_cost = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='单位成本',
+        help_text='入库时的单位成本金额',
+        default=0
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 

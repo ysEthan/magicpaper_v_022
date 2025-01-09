@@ -198,6 +198,16 @@ class WDTOrderSync:
                         if currency and currency in dict(Order.CURRENCY_CHOICES):
                             order.currency = currency
                         
+                        # 更新地址信息
+                        order.shipping_address = order_data.get('receiverAddress', '')
+                        order.shipping_contact = order_data.get('receiverName', '')
+                        order.shipping_phone = order_data.get('receiverMobile') or order_data.get('receiverTelno', '')
+                        order.postal_code = order_data.get('receiverZip', '')
+                        order.country = order_data.get('country', '')
+                        order.state = order_data.get('receiverProvince', '')
+                        order.city = order_data.get('receiverCity', '')
+                        order.district = order_data.get('receiverDistrict', '')
+                        
                         # 更新备注信息
                         order.system_remark = order_data.get('erpRemark', '').strip()
                         order.cs_remark = order_data.get('csRemark', '').strip()
@@ -289,8 +299,12 @@ class WDTOrderSync:
                             status=self._get_order_status(order_data.get('tradeStatusDesc', '待处理')),
                             shipping_contact=order_data.get('receiverName', ''),
                             shipping_phone=order_data.get('receiverMobile') or order_data.get('receiverTelno', ''),
-                            shipping_address=f"{order_data.get('receiverProvince', '')} {order_data.get('receiverCity', '')} {order_data.get('receiverAddress', '')}".strip(),
+                            shipping_address=order_data.get('receiverAddress', ''),
                             postal_code=order_data.get('receiverZip', ''),
+                            country=order_data.get('country', ''),
+                            state=order_data.get('receiverProvince', ''),
+                            city=order_data.get('receiverCity', ''),
+                            district=order_data.get('receiverDistrict', ''),
                             payment_status=order_data.get('tradeStatusDesc') not in ['待付款', '已取消'],
                             payment_time=datetime.strptime(order_data['created'], '%Y-%m-%dT%H:%M:%S') if order_data.get('created') else None,
                             order_place_time=datetime.strptime(order_data['created'], '%Y-%m-%dT%H:%M:%S') if order_data.get('created') else None,

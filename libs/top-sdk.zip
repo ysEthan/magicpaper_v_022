@@ -1,0 +1,202 @@
+
+<!doctype html>
+<html>
+<head>
+    <link rel="shortcut icon" href="//www.taobao.com/favicon.ico">
+    <meta charset="utf8">
+    <meta name="aplus-auto-exp" content='[{"logkey":"/tbpcsearch.item.search_item_exp","tag":"div","filter":"data-name","props":["name","index","category"],"pkgSize":9,"method":"GET"}]'>
+    <meta name="description" content="淘宝搜索是最智能的商品搜索引擎，通过大数据的运营，准确的理解商品与用户，提供精准的个性化搜索体验。">
+    <meta name="keywords" content="淘宝搜索">
+    <title>淘宝搜索</title>
+    <script>
+
+        g_ks_monitor_st = +new Date;
+        window.givenByFE = {};
+        window.g_config = {
+            appId: 3,
+            toolbar: false,
+            webww: true,
+            footer: false,
+            ap_mods: {
+                jstracker: [0.0001]
+            },
+            barrierFree: true,
+            region: true
+        }
+    </script>
+
+    <script src="//g.alicdn.com/??kissy/k/1.4.16/seed-min.js,kg/kmd-adapter/0.1.5/index.js,kg/kmd-adapter/0.1.5/util.js,kg/global-util/1.0.7/index-min.js,tb/tracker/index.js"></script>
+<script src="//o.alicdn.com/tbhome/tbnav/index.js" charset="UTF-8"></script>
+<script>KISSY.config({combine:true, modules:{'flash':{alias:['gallery/flash/1.0/']}}});KISSY.use('kg/global-util/1.0.7/');</script>
+    <link rel="stylesheet" href="//g.alicdn.com/??kg/global-util/1.0.5/index-min.css,kg/tb-gnav/1.0.5/index-min.css">
+
+    <script src="//g.alicdn.com/tb/bsrp/0.30.0/publish/??staobaocom.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="//g.alicdn.com/tb/bsrp/0.30.0/publish/??staobaocom.css">
+
+    <link rel="search" type="application/opensearchdescription+xml" title="淘宝搜索" href="/opensearch.xml"/>
+</head>
+<style>
+    .site-nav .my-taobao .menu-bd-panel a:nth-child(4) {
+        display: none;
+    }
+</style>
+<body id="index" data-spm="1"><script>
+with(document)with(body)with(insertBefore(createElement("script"),firstChild))setAttribute("exparams","category=&userid=&aplus&yunid=&&trid=213e030a17364124355598480e0f86&asid=AQAAAAATjX9nKmHeGAAAAACmTdXMJq2VIw==&sidx=isRAJ3wsRhJOgtf+Nnkin2Nzp+Wjk11oxmN85Y7uqdrNiv4oFtCOWxqZcpFyvKo21E7asCaxGXXPZhrnMmFJdQYBw4VyuqnmUF7X8dfIdZj2SeijgPqGHkBdXlt17lWUvtfRcxN9pwGpzIkhgBMm2mbMLpOiNrimzACafB4p5eQ=",id="tb-beacon-aplus",src=(location>"https"?"//g":"//g")+".alicdn.com/alilog/mlog/aplus_v2.js")
+</script>
+
+
+    <div class="site-nav" id="J_SiteNav" data-component-config='{ "cart": "0.0.6","message": "3.4.6","umpp": "1.5.4","mini-login": "6.3.8","tb-ie-updater": "0.0.4","tbar": "2.1.0","tb-footer": "1.1.8","sidebar": "1.0.10" }'>
+  <div class="site-nav-bd" id="J_SiteNavBd"></div>
+</div>
+<!--[if lt IE 8]>
+<style>html{overflow-y:hidden}</style>
+<div class="tb-ie-updater-layer" id="J_IEUpdaterLayer"></div>
+<div class="tb-ie-updater-box" data-spm="20161112" id="J_IEUpdaterBox">
+  <a href="https://www.google.cn/intl/zh-CN/chrome/browser/desktop/" class="tb-ie-updater-google" target="_blank" data-spm-click="gostr=/tbieupdate;locaid=d1;name=google">谷歌 Chrome</a>
+  <a href="http://www.uc.cn/ucbrowser/download/" class="tb-ie-updater-uc" target="_blank" data-spm-click="gostr=/tbieupdate20161112;locaid=d2;name=uc">UC 浏览器</a>"
+  <a class="tb-ie-updater-close" href="#" onclick="document.getElementById('J_IEUpdaterLayer').style.display='none';document.getElementById('J_IEUpdaterBox').style.display='none';document.documentElement.style.overflow='auto';return false">x</a>
+</div>
+<![endif]-->
+
+<!-- 全网顶通 -->
+
+<!-- E GLOBAL HTML -->
+<div id="page" class="w950" style="width: 950px;margin: 0 auto;">
+    <div id="header">
+        <div class="grid-c">
+
+            <div class="module" id="stblogo">
+
+
+                <style type="text/css">
+                    body {
+                        background-color: #fff;
+                    }
+
+                    #stblogo {
+                        position: absolute;
+                        height: 320px;
+                        width: 950px;
+                        background: url("//img.alicdn.com/imgextra/i2/O1CN01LYCYKE1sjMeJjd2Kr_!!6000000005802-2-tps-950-320.png");
+                    }
+
+                    #stblogo a {
+                        margin: 65px 0 0 364px;
+                        display: block;
+                        width: 225px;
+                        height: 65px;
+                        position: relative;
+                    }
+
+                    .bang-index h5 {
+                        color:;
+                    }
+
+                    .search-tab li a {
+                        color:;
+                    }
+
+                    .bang-index i {
+                        color:;
+                    }
+
+                    .bang-index li.first i {
+                        color:;
+                    }
+
+                    .bang-index li a,
+                    .search-tab li a {
+                        color:;
+                    }
+
+                    .bang-index div.hot,
+                    .bang-index div.grow, #footer {
+                        border-color:;
+                    }
+
+                    #server-num {
+                        color: #fff !important;
+                        _display: none;
+                    }
+
+                    .search-auto, .search-form .input,
+                    .search-tab li.selected,
+                    .search-tab li.selected .l,
+                    .search-tab li.selected .r,
+                    .search-form .l,
+                    .search-form form button,
+                    .search-form .r {
+                        background-image: url("//img.alicdn.com/tps/i4/T1uMVXXyNXXXcbsd3e-950-320.png");
+                    }
+                </style>
+                <a href="//www.taobao.com/?spm=1.2164996.a21459f.1" target="_top">
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+    <div class="search-form">
+        <div class="search-box">
+            <div class="search-triggers">
+                <ul class="ks-switchable-nav" id="J_SearchTab">
+                    <li class="selected" data-searchtype="item" data-defaultpage="nogo"><a hidefocus="true"
+                                                                                           href="">宝贝</a></li>
+                    <li data-searchtype="shop"
+                        data-defaultpage="//shopsearch.taobao.com/search"
+                        data-action="//shopsearch.taobao.com/search"><a hidefocus="true" href="">店铺</a></li>
+                </ul>
+            </div>
+            <div class="search-panel search-srp-panel ks-switchable-content">
+                <form id="J_SearchForm" action="/search" method="get">
+                    <!-- 这是一个tab组件 -->
+
+                    <input type="hidden" name="initiative_id" value="staobaoz_20250109"/>
+
+                    <div class="search-panel-fields search-srp-panel-fields search-common-panel">
+                        <!-- 如果没有类目，则多加一个样式allWidth -->
+                        <div class="search-button">
+                            <button class="btn-search" type="submit">搜 索</button>
+                        </div>
+
+                        <div class="input-auto">
+                            <input aria-haspopup="true"
+                                   aria-combobox="list" role="combobox" combobox="off"
+                                   class="ks-combobox-input" tabindex="0"
+                                   id="q" name="q" value="" placeholder="请输入要搜索的内容"
+                                   _default="请输入要搜索的内容" lang="zh-CN"
+                                   autocomplete="off"
+                            />
+                        </div>
+                        <!--
+                        <div class="input-auto">
+                            <input id="q" accesskey="s" name="q" maxlength="60" autocomplete="off" value="{{q}}" id="title" placeholder="请输入要搜索的内容" _default="请输入要搜索的内容" lang="zh-CN"/>
+                        </div>
+                        -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="bang bang-index" data-spm="14" style="min-height:150px">
+        
+    </div>
+
+    <div class="tb-footer">
+        <div data-spm="13" id="footer">
+            <div class="copyright">
+                &copy; 2017-现在 Taobao.com 版权所有<br>
+                增值电信业务经营许可证：浙B2-20080224
+            </div>
+            <div style="color:#fff" id="server-num"></div>
+        </div>
+    </div>
+</div>
+<div id="J_No_Gotop"></div>
+<script>
+    function rand() {
+        return parseInt(Math.random() * 100000 + 1);
+    }
+</script>
+</body>
+</html>

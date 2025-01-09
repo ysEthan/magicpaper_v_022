@@ -20,4 +20,5 @@ urlpatterns = [
     # API endpoints
     path('api/services/<int:pk>/', views.service_update, name='service_update'),
     path('report/', views.report, name='report'),
+    path('package/<int:pk>/push-to-jky/', views.push_to_jky, name='push_to_jky'),
 ] 

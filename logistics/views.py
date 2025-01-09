@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -6,6 +6,12 @@ from django.db.models import Q, Count, Sum, F
 from django.utils import timezone
 from .models import Carrier, Service, Package, Tracking
 import json
+from django.contrib import messages
+from django.utils.translation import gettext as _
+from .services.jky_service import JiKeYunService
+from .jky_config import CARRIER_CODE_MAP
+import logging
+from django.utils.safestring import mark_safe
 
 @login_required
 def carrier_list(request):
@@ -239,3 +245,96 @@ def report(request):
     }
     
     return render(request, 'logistics/report.html', context)
+
+def push_to_jky(request, pk):
+    """推送包裹信息到吉客云"""
+    try:
+        package = get_object_or_404(Package, pk=pk)
+        logger = logging.getLogger('logistics.jky')
+        
+        logger.info(f"开始处理包裹推送请求 - 包裹ID: {pk}")
+        logger.info(f"包裹基本信息 - 运单号: {package.tracking_no}, 物流商: {package.carrier_name}, 服务: {package.service_name}")
+        
+        # 检查必要信息是否完整
+        missing_fields = []
+        request_info = {
+            '包裹ID': pk,
+            '运单号': package.tracking_no or '未填写',
+            '发货仓库': package.warehouse.warehouse_name if package.warehouse else '未选择',
+            '平台订单号': package.order.platform_order_number if package.order else '未填写',
+            '物流商': package.carrier_name or '未选择',
+            '物流服务': package.service_name or '未选择',
+            '包裹状态': package.get_pkg_status_code_display() if hasattr(package, 'get_pkg_status_code_display') else '未知',
+            '包裹尺寸': {
+                '长': str(package.length) if package.length else '未填写',
+                '宽': str(package.width) if package.width else '未填写',
+                '高': str(package.height) if package.height else '未填写',
+                '重量': str(package.weight) if package.weight else '未填写',
+                '体积': str(package.volume) if package.volume else '未填写'
+            }
+        }
+        
+        if not package.tracking_no:
+            missing_fields.append('运单号')
+            
+        if not package.warehouse:
+            missing_fields.append('发货仓库')
+            
+        if not package.order.platform_order_number:
+            missing_fields.append('平台订单号')
+        
+        if missing_fields:
+            error_message = mark_safe(_(
+                f'以下字段不能为空：{", ".join(missing_fields)}<br><br>'
+                '<strong>当前数据：</strong><br>'
+                '<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">'
+                f'{json.dumps(request_info, ensure_ascii=False, indent=2)}</pre>'
+            ))
+            messages.error(request, error_message)
+            logger.warning(f"推送失败：字段缺失 - 包裹ID: {pk}, 缺失字段: {missing_fields}")
+            return redirect('logistics:package_detail', pk=pk)
+        
+        # 推送到吉客云
+        service = JiKeYunService()
+        success, message, request_data = service.push_package(package)
+        
+        if success:
+            messages.success(request, mark_safe(_(
+                '推送成功<br><br>'
+                '<strong>请求数据：</strong><br>'
+                '<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">'
+                f'{request_data}</pre>'
+            )))
+            logger.info(f"推送成功 - 包裹ID: {pk}")
+        else:
+            messages.error(request, mark_safe(_(
+                f'{message}<br><br>'
+                '<strong>请求数据：</strong><br>'
+                '<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">'
+                f'{request_data}</pre>'
+            )))
+            logger.error(f"推送失败 - 包裹ID: {pk}, 错误信息: {message}")
+        
+    except Exception as e:
+        error_msg = f"系统错误: {str(e)}"
+        try:
+            current_data = {
+                '包裹ID': pk,
+                '错误类型': e.__class__.__name__,
+                '错误信息': str(e),
+                '错误位置': str(e.__traceback__.tb_frame.f_code.co_filename),
+                '错误行号': str(e.__traceback__.tb_lineno)
+            }
+            error_detail = json.dumps(current_data, ensure_ascii=False, indent=2)
+        except:
+            error_detail = str(e)
+            
+        messages.error(request, mark_safe(_(
+            f'{error_msg}<br><br>'
+            '<strong>错误详情：</strong><br>'
+            '<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">'
+            f'{error_detail}</pre>'
+        )))
+        logger.exception(f"推送异常 - 包裹ID: {pk}")
+    
+    return redirect('logistics:package_detail', pk=pk)

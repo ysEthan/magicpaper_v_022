@@ -60,9 +60,7 @@
             <table class="table table-vcenter card-table">
                 <thead>
                     <tr>
-                        <th>{% trans '运单号' %}</th>
-                        <th>{% trans '订单号' %}</th>
-                        <th>{% trans '物流商' %}</th>
+                        <th>{% trans '包裹信息' %}</th>
                         <th>{% trans '服务' %}</th>
                         <th>{% trans '状态' %}</th>
                         <th>{% trans '重量' %}</th>
@@ -76,12 +74,16 @@
                     {% for package in packages %}
                     <tr>
                         <td>
-                            <a href="{% url 'logistics:package_detail' package.pk %}">
-                                {{ package.tracking_no|default:'-' }}
-                            </a>
+                            <div>
+                                <div><strong>{% trans '运单号：' %}</strong>
+                                    <a href="{% url 'logistics:package_detail' package.pk %}">
+                                        {{ package.tracking_no|default:'-' }}
+                                    </a>
+                                </div>
+                                <div><strong>{% trans '平台订单号：' %}</strong>{{ package.order.order_number }}</div>
+                                <div><strong>{% trans '物流商：' %}</strong>{{ package.carrier_name }}</div>
+                            </div>
                         </td>
-                        <td>{{ package.order.order_number }}</td>
-                        <td>{{ package.carrier_name }}</td>
                         <td>{{ package.service_name }}</td>
                         <td>
                             <span class="badge 

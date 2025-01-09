@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load trade_tags %}
 
 {% block title %}订单列表{% endblock %}
 
@@ -43,7 +44,7 @@
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-2">
-                    <select name="status" class="form-select">
+                    <select name="status" class="form-select form-select-sm">
                         <option value="">订单状态</option>
                         {% for status, name in status_choices %}
                         <option value="{{ status }}" {% if status == current_status %}selected{% endif %}>{{ name }}</option>
@@ -51,7 +52,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select name="type" class="form-select">
+                    <select name="type" class="form-select form-select-sm">
                         <option value="">订单类型</option>
                         {% for type, name in order_types %}
                         <option value="{{ type }}" {% if type == current_type %}selected{% endif %}>{{ name }}</option>
@@ -59,7 +60,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select name="shop" class="form-select">
+                    <select name="shop" class="form-select form-select-sm">
                         <option value="">所属店铺</option>
                         {% for shop in shops %}
                         <option value="{{ shop.id }}" {% if shop.id|stringformat:"s" == current_shop %}selected{% endif %}>{{ shop.name }}</option>
@@ -68,7 +69,7 @@
                 </div>
                 <div class="col-md-4">
                     <div class="input-icon">
-                        <input type="text" name="search" class="form-control" placeholder="搜索订单号/收货人..." value="{{ search_query }}">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="搜索订单号/收货人..." value="{{ search_query }}">
                         <span class="input-icon-addon">
                             <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
@@ -79,7 +80,7 @@
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                             <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
@@ -98,11 +99,10 @@
             <table class="table table-vcenter card-table">
                 <thead>
                     <tr>
-                        <th>基本信息</th>
-                        <th>收货人</th>
-                        <th>金额</th>
-                        <th>状态</th>
-                        <th>下单时间</th>
+                        <th style="width: 220px;">基本信息</th>
+                        <th style="width: 220px;">收货人</th>
+                        <th style="width: 220px;">仓配信息</th>
+                        <th>时间信息</th>
                         <th class="w-1"></th>
                     </tr>
                 </thead>
@@ -110,62 +110,121 @@
                     {% for order in orders %}
                     <tr>
                         <td>
-                            <div class="d-flex flex-column">
+                            <div class="d-flex flex-column gap-1">
                                 <div>
-                                    {{ order.shop.name }} 
+                                    <span class="small me-2">
                                     {% if order.order_type == 'platform' %}
-                                    <span class="badge bg-azure-lt">平台</span>
+                                    [平台]
                                     {% elif order.order_type == 'influencer' %}
-                                    <span class="badge bg-purple-lt">达人</span>
+                                    [达人]
                                     {% elif order.order_type == 'offline' %}
-                                    <span class="badge bg-orange-lt">线下</span>
+                                    [线下]
                                     {% elif order.order_type == 'requisition' %}
-                                    <span class="badge bg-teal-lt">领用</span>
+                                    [领用]
                                     {% elif order.order_type == 'employee' %}
-                                    <span class="badge bg-lime-lt">员工</span>
+                                    [员工]
                                     {% endif %}
+                                    </span>
+                                    {{ order.shop.name }}
                                 </div>
                                 {% if order.platform_order_number %}
-                                <div class="text-muted">{{ order.platform_order_number }}</div>
+                                <div class="text-muted small">{{ order.platform_order_number }}</div>
                                 {% endif %}
+                                <div class="small">
+                                    订单状态: 
+                                    {% if order.status == 'unpaid' %}
+                                    <span class="text-orange">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'pending' %}
+                                    <span class="text-azure">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'picking' %}
+                                    <span class="text-indigo">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'shipped' %}
+                                    <span class="text-lime">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'cancelled' %}
+                                    <span class="text-pink">{{ order.get_status_display }}</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex flex-column">
                                 <div>{{ order.shipping_contact }}</div>
-                                <div class="text-muted small">{{ order.shipping_address|slice:":30" }}</div>
+                                <div class="text-muted small">
+                                    {% if order.country or order.state or order.city %}
+                                        {{ order.country }} {{ order.state }} {{ order.city }}
+                                    {% endif %}
+                                </div>
+                                <div class="small">
+                                    <span class="text-muted">sku: </span><strong class="text-dark">{{ order.sku_count }}</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-muted">pcs: </span><strong class="text-dark">{{ order.total_quantity }}</strong>
+                                </div>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex flex-column">
-                                <div>¥{{ order.total_amount }}</div>
-                                {% if order.shipping_fee > 0 %}
-                                <div class="text-muted">运费: ¥{{ order.shipping_fee }}</div>
+                                {% if order.package %}
+                                    {% if order.package.warehouse %}
+                                    <div>{{ order.package.warehouse.warehouse_name }}</div>
+                                    {% endif %}
+                                    {% if order.package.service %}
+                                        {% if order.package.service.carrier %}
+                                        <div class="text-muted">
+                                            {{ order.package.service.carrier.name_zh }}
+                                            {% if order.package.tracking_no %}
+                                             | <a href="https://t.17track.net/zh-cn#nums={{ order.package.tracking_no }}&fc={{ order.package.service.carrier.query_key }}" target="_blank" class="text-dark text-decoration-underline">{{ order.package.tracking_no }}</a>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% endif %}
+                                    <div class="text-muted small">
+                                        {% if order.package.pkg_status_code == '0' %}
+                                        <span class="badge bg-orange-lt">{{ order.package.get_pkg_status_code_display }}</span>
+                                        {% elif order.package.pkg_status_code == '1' %}
+                                        <span class="badge bg-azure-lt">{{ order.package.get_pkg_status_code_display }}</span>
+                                        {% elif order.package.pkg_status_code == '2' %}
+                                        <span class="badge bg-indigo-lt">{{ order.package.get_pkg_status_code_display }}</span>
+                                        {% elif order.package.pkg_status_code == '3' %}
+                                        <span class="badge bg-lime-lt">{{ order.package.get_pkg_status_code_display }}</span>
+                                        {% elif order.package.pkg_status_code == '4' %}
+                                        <span class="badge bg-pink-lt">{{ order.package.get_pkg_status_code_display }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="text-muted small">未分配包裹</div>
                                 {% endif %}
                             </div>
                         </td>
                         <td>
-                            {% if order.status == 'unpaid' %}
-                            <span class="badge bg-yellow">{{ order.get_status_display }}</span>
-                            {% elif order.status == 'pending' %}
-                            <span class="badge bg-blue">{{ order.get_status_display }}</span>
-                            {% elif order.status == 'picking' %}
-                            <span class="badge bg-purple">{{ order.get_status_display }}</span>
-                            {% elif order.status == 'shipped' %}
-                            <span class="badge bg-green">{{ order.get_status_display }}</span>
-                            {% elif order.status == 'cancelled' %}
-                            <span class="badge bg-red">{{ order.get_status_display }}</span>
-                            {% endif %}
+                            <div class="d-flex flex-column">
+                                <div>下单：{{ order.updated_at|date:"Y-m-d H:i" }}</div>
+                                <div class="text-muted">
+                                    发货：{% if order.package.shipped_time %}{{ order.package.shipped_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+                                </div>
+                                <div class="text-muted">
+                                    签收：{% if order.package.delivered_time %}{{ order.package.delivered_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+                                </div>
+                            </div>
                         </td>
-                        <td>{{ order.order_place_time|date:"Y-m-d H:i" }}</td>
                         <td>
-                            <a href="{% url 'trade:order_detail' order.pk %}" class="btn btn-primary btn-icon" title="查看详情">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                    <circle cx="12" cy="12" r="2" />
-                                    <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
-                                </svg>
-                            </a>
+                            <div class="btn-list">
+                                <a href="{% url 'trade:order_detail' order.pk %}" class="btn btn-primary btn-icon" title="订单详情">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                        <circle cx="12" cy="12" r="2" />
+                                        <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
+                                    </svg>
+                                </a>
+                                {% if order.package %}
+                                <a href="{% url 'logistics:package_detail' order.package.pk %}" class="btn btn-azure btn-icon" title="包裹详情">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                        <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" />
+                                        <path d="M12 12l8 -4.5" />
+                                        <path d="M12 12l0 9" />
+                                        <path d="M12 12l-8 -4.5" />
+                                    </svg>
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
@@ -188,17 +247,17 @@
         
         <!-- 分页 -->
         {% if is_paginated %}
-        <div class="card-footer d-flex align-items-center">
-            <p class="m-0 text-muted">第 <span>{{ page_obj.start_index }}</span> 到 <span>{{ page_obj.end_index }}</span> 条，共 <span>{{ paginator.count }}</span> 条</p>
-            <ul class="pagination m-0 ms-auto">
+        <div class="card-footer d-flex align-items-center py-2">
+            <p class="m-0 text-muted small">第 <span>{{ page_obj.start_index }}</span> 到 <span>{{ page_obj.end_index }}</span> 条，共 <span>{{ paginator.count }}</span> 条</p>
+            <ul class="pagination m-0 ms-auto gap-1">
                 {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <a class="page-link btn-sm" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="11 7 6 12 11 17" /><polyline points="17 7 12 12 17 17" /></svg>
                     </a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <a class="page-link btn-sm" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="15 6 9 12 15 18" /></svg>
                     </a>
                 </li>
@@ -216,12 +275,12 @@
                 
                 {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <a class="page-link btn-sm" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="9 6 15 12 9 18" /></svg>
                     </a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                    <a class="page-link btn-sm" href="?page={{ paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.shop %}&shop={{ request.GET.shop }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><polyline points="7 7 12 12 7 17" /><polyline points="13 7 18 12 13 17" /></svg>
                     </a>
                 </li>

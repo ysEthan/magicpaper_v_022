@@ -28,7 +28,28 @@ class OrderListView(LoginRequiredMixin, ListView):
     ordering = ['-order_place_time']
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related(
+            'shop',
+            'package',
+            'package__warehouse',
+            'package__service',
+            'package__service__carrier'
+        ).annotate(
+            sku_count=Count('items__sku', distinct=True),
+            total_quantity=Sum('items__quantity')
+        )
+        
+        # 添加调试日志
+        logger.debug("Querying orders with package info")
+        for order in queryset[:5]:  # 只检查前5个订单
+            logger.debug(f"Order {order.order_number}:")
+            logger.debug(f"- Package: {order.package}")
+            if order.package:
+                logger.debug(f"- Warehouse: {order.package.warehouse}")
+                logger.debug(f"- Service: {order.package.service}")
+                if order.package.service:
+                    logger.debug(f"- Carrier: {order.package.service.carrier}")
+
         # 获取过滤参数
         status = self.request.GET.get('status')
         order_type = self.request.GET.get('type')
@@ -192,12 +213,51 @@ def report(request):
             index = dates.index(item['order_place_time__date'])
             order_trend[index] = item['count']
         
+        # 计算百分比
+        pending_orders_percentage = round((pending_orders / total_orders * 100) if total_orders > 0 else 0, 1)
+        
+        # 计算环比（与上月相比的增长率）
+        last_month_start = month_start.replace(month=month_start.month-1 if month_start.month > 1 else 12)
+        last_month_amount = orders.filter(
+            order_place_time__gte=last_month_start,
+            order_place_time__lt=month_start
+        ).aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        month_over_month = round(
+            ((month_sales - last_month_amount) / last_month_amount * 100) if last_month_amount > 0 else 0,
+            1
+        )
+        
+        # 按订单类型统计
+        order_types = []
+        for type_code, type_name in Order.ORDER_TYPE_CHOICES:
+            type_orders = orders.filter(order_type=type_code)
+            count = type_orders.count()
+            if count > 0:  # 只添加有订单的类型
+                amount = type_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+                percentage = round((count / total_orders * 100) if total_orders > 0 else 0, 1)
+                
+                order_types.append({
+                    'name': type_name,
+                    'count': count,
+                    'amount': amount,
+                    'percentage': percentage
+                })
+        
         report_data = {
             'total_orders': total_orders,
             'pending_orders': pending_orders,
-            'today_orders': today_orders,
-            'month_sales': month_sales,
-            'order_trend': json.dumps(order_trend)
+            'pending_orders_percentage': pending_orders_percentage,
+            'new_orders_today': today_orders,
+            'month_amount': month_sales,
+            'month_over_month': month_over_month,
+            'order_types': order_types,
+            'trend_dates': json.dumps([d.strftime('%Y-%m-%d') for d in dates]),
+            'trend_counts': json.dumps(order_trend),
+            'current_month': today.strftime('%Y年%m月'),
+            'active_menu': 'trade',
+            'active_submenu': 'report'
         }
         
         # 设置缓存，5分钟过期
