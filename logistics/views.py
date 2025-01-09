@@ -152,19 +152,19 @@ def report(request):
     
     # 未完成包裹（未发货或运输中的包裹）
     pending_packages = Package.objects.filter(
-        status__in=['pending', 'in_transit']
+        pkg_status_code__in=['0', '1', '2']
     ).count()
     
     # 计算本月运费
     month_shipping_cost = Package.objects.filter(
         created_at__gte=month_start
     ).aggregate(
-        total=Sum('shipping_cost')
+        total=Sum('carrier_cost')
     )['total'] or 0
     
-    # 异常包裹（退回、丢失等）
+    # 异常包裹（已取消）
     abnormal_packages = Package.objects.filter(
-        status__in=['returned', 'lost', 'damaged']
+        pkg_status_code='4'
     ).count()
     
     # 计算百分比
@@ -177,7 +177,7 @@ def report(request):
         created_at__gte=last_month_start,
         created_at__lt=month_start
     ).aggregate(
-        total=Sum('shipping_cost')
+        total=Sum('carrier_cost')
     )['total'] or 0
     month_over_month = round(
         ((month_shipping_cost - last_month_cost) / last_month_cost * 100) if last_month_cost > 0 else 0,
@@ -186,32 +186,32 @@ def report(request):
     
     # 按物流商统计
     carriers = Carrier.objects.annotate(
-        total_packages=Count('packages'),
+        total_packages=Count('services__packages'),
         pending_packages=Count(
-            'packages',
-            filter=Q(packages__status__in=['pending', 'in_transit'])
+            'services__packages',
+            filter=Q(services__packages__pkg_status_code__in=['0', '1', '2'])
         ),
         month_cost=Sum(
-            'packages__shipping_cost',
-            filter=Q(packages__created_at__gte=month_start)
+            'services__packages__carrier_cost',
+            filter=Q(services__packages__created_at__gte=month_start)
         ),
         abnormal_packages=Count(
-            'packages',
-            filter=Q(packages__status__in=['returned', 'lost', 'damaged'])
+            'services__packages',
+            filter=Q(services__packages__pkg_status_code='4')
         )
     )
     
     # 按包裹状态统计
     package_status = []
     total_cost = Package.objects.aggregate(
-        total=Sum('shipping_cost')
+        total=Sum('carrier_cost')
     )['total'] or 0
     
     for status_code, status_name in Package.STATUS_CHOICES:
-        status_packages = Package.objects.filter(status=status_code)
+        status_packages = Package.objects.filter(pkg_status_code=status_code)
         count = status_packages.count()
         cost = status_packages.aggregate(
-            total=Sum('shipping_cost')
+            total=Sum('carrier_cost')
         )['total'] or 0
         percentage = round((cost / total_cost * 100) if total_cost > 0 else 0, 1)
         
@@ -234,7 +234,8 @@ def report(request):
         'carriers': carriers,
         'package_status': package_status,
         'current_month': today.strftime('%Y年%m月'),
-        'active_menu': 'logistics_report'
+        'active_menu': 'logistics',
+        'active_submenu': 'report'
     }
     
     return render(request, 'logistics/report.html', context)

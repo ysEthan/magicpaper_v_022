@@ -2,55 +2,231 @@
 {% load static %}
 
 {% block content %}
+<style>
+.metric-value {
+    font-size: 1.46rem !important;  /* 1.54rem 减少 5% */
+    font-weight: bold;
+}
+.total-value {
+    font-size: 1.95rem !important;  /* 2.05rem 减少 5% */
+    font-weight: bold;
+}
+.amount-value {
+    color: #0054a6 !important;  /* 使用更深的蓝色显示金额 */
+}
+.card {
+    border: 1px solid rgba(98, 105, 118, 0.35) !important;
+    box-shadow: rgba(35, 46, 60, 0.15) 0 4px 12px 0 !important;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: rgba(35, 46, 60, 0.2) 0 8px 16px 0 !important;
+    border-color: rgba(98, 105, 118, 0.5) !important;
+}
+</style>
 <div class="page-wrapper">
-    <!-- Page header -->
-    <div class="page-header d-print-none">
-        <div class="container-xl">
-            <div class="row g-2 align-items-center">
+    <!-- Page body -->
+    <div class="page-body">
+        <div class="container-fluid">
+            <div class="row g-2">
+                <!-- 订单统计 -->
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="row align-items-center flex-grow-1">
+                                <div class="col-auto">
+                                    <div class="h3 mb-1">订单总数</div>
+                                    <div class="total-value mb-1">{{ total_orders }}</div>
+                                    <div class="row g-2 align-items-center mt-2">
+                                        <div class="col-auto">
+                                            <span class="text-blue d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本周新增</span>
+                                                <span class="metric-value">{{ week_orders|default:0 }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-green d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">今日新增</span>
+                                                <span class="metric-value">{{ today_orders }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">待处理</span>
+                                                <span class="metric-value">{{ pending_orders }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="text-blue d-inline-flex align-items-center">
+                                            <span class="text-muted me-1">本月销售额</span>
+                                            <span class="metric-value amount-value">$ {{ month_sales|floatformat:2 }}</span>
+                                        </span>
+                                    </div>
+                                </div>
                 <div class="col">
-                    <h2 class="page-title">
-                        欢迎使用ERP系统
-                    </h2>
+                                    <div id="order-trend" style="height: 120px"></div>
+                                </div>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Page body -->
-    <div class="page-body">
-        <div class="container-xl">
-            <div class="row row-deck row-cards">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h3 class="card-title">系统概览</h3>
-                            <div class="row row-cards">
-                                <div class="col-sm-6 col-lg-3">
-                                    <div class="card card-sm">
-                                        <div class="card-body">
-                                            <div class="row align-items-center">
+                <!-- 物流统计 -->
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="row align-items-center flex-grow-1">
+                                <div class="col-auto">
+                                    <div class="h3 mb-1">未完成包裹</div>
+                                    <div class="total-value mb-1">{{ pending_packages }}</div>
+                                    <div class="row g-2 align-items-center mt-2">
                                                 <div class="col-auto">
-                                                    <span class="bg-primary text-white avatar">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-                                                            <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
-                                                            <path d="M16 3v4" />
-                                                            <path d="M8 3v4" />
-                                                            <path d="M4 11h16" />
-                                                            <path d="M11 15h1" />
-                                                            <path d="M12 15v3" />
-                                                        </svg>
+                                            <span class="text-blue d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本周新增</span>
+                                                <span class="metric-value">{{ week_packages|default:0 }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-green d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">今日新增</span>
+                                                <span class="metric-value">{{ today_packages }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">处理中</span>
+                                                <span class="metric-value">{{ processing_packages }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="text-blue d-inline-flex align-items-center">
+                                            <span class="text-muted me-1">本月运费</span>
+                                            <span class="metric-value amount-value">¥{{ month_shipping_cost|floatformat:2 }}</span>
                                                     </span>
+                                    </div>
                                                 </div>
                                                 <div class="col">
-                                                    <div class="font-weight-medium">
-                                                        订单管理
+                                    <div id="logistics-trend" style="height: 120px"></div>
+                                </div>
+                            </div>
                                                     </div>
                                                 </div>
                                             </div>
+                <!-- 第一行第三列空白 -->
+                <div class="col-md-4">
+                </div>
+                <!-- 商品统计 -->
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="row align-items-center flex-grow-1">
+                                <div class="col-auto">
+                                    <div class="h3 mb-1">商品总数</div>
+                                    <div class="total-value mb-1">{{ total_products }}</div>
+                                    <div class="row g-2 align-items-center mt-2">
+                                        <div class="col-auto">
+                                            <span class="text-blue d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本周新增</span>
+                                                <span class="metric-value">{{ new_products_week|default:0 }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-green d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">今日新增</span>
+                                                <span class="metric-value">{{ new_products_today }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本月新增</span>
+                                                <span class="metric-value">{{ new_products_month }}</span>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                <!-- 其他卡片可以类似添加 -->
+                                <div class="col">
+                                    <div id="product-trend" style="height: 120px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 库存统计 -->
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="row align-items-center flex-grow-1">
+                                <div class="col-auto">
+                                    <div class="h3 mb-1">库存总数</div>
+                                    <div class="total-value mb-1">{{ total_inventory }}</div>
+                                    <div class="row g-2 align-items-center mt-2">
+                                        <div class="col-auto">
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">低库存</span>
+                                                <span class="metric-value">{{ low_stock_count }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-red d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">缺货</span>
+                                                <span class="metric-value">{{ out_of_stock_count }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="text-blue d-inline-flex align-items-center">
+                                            <span class="text-muted me-1">库存总值</span>
+                                            <span class="metric-value amount-value">¥{{ total_inventory_value|floatformat:2 }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div id="inventory-trend" style="height: 120px"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 采购统计 -->
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body p-3 d-flex flex-column">
+                            <div class="row align-items-center flex-grow-1">
+                                <div class="col-auto">
+                                    <div class="h3 mb-1">进行中采购单</div>
+                                    <div class="total-value mb-1">{{ active_purchase_orders }}</div>
+                                    <div class="row g-2 align-items-center mt-2">
+                                        <div class="col-auto">
+                                            <span class="text-blue d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">本周新增</span>
+                                                <span class="metric-value">{{ week_purchase_orders|default:0 }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-green d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">今日新增</span>
+                                                <span class="metric-value">{{ today_purchase_orders }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
+                                            <span class="text-orange d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">待审核</span>
+                                                <span class="metric-value">{{ draft_purchase_orders }}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="text-blue d-inline-flex align-items-center">
+                                            <span class="text-muted me-1">本月采购额</span>
+                                            <span class="metric-value amount-value">¥{{ month_purchase|floatformat:2 }}</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div id="purchase-trend" style="height: 120px"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -59,4 +235,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dashboardData = JSON.parse('{{ dashboard_data|safe }}');
+        initDashboardCharts(dashboardData);
+    });
+</script>
 {% endblock %} 

@@ -74,7 +74,7 @@
                                             <tbody>
                                                 {% for carrier in carriers %}
                                                 <tr>
-                                                    <td>{{ carrier.name }}</td>
+                                                    <td>{{ carrier.name_zh }}</td>
                                                     <td class="text-right">{{ carrier.total_packages }}</td>
                                                     <td class="text-right">{{ carrier.pending_packages }}</td>
                                                     <td class="text-right">¥{{ carrier.month_cost|floatformat:2 }}</td>

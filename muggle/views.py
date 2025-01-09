@@ -34,6 +34,7 @@ def register_view(request):
 @login_required
 def logout_view(request):
     logout(request)
+    messages.success(request, "您已成功退出登录")
     return redirect('muggle:login')
 
 def password_reset_view(request):

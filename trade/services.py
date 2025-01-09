@@ -193,6 +193,11 @@ class WDTOrderSync:
                         order.payment_status = order_data.get('tradeStatusDesc') not in ['待付款', '已取消']
                         order.total_amount = float(order_data.get('receivable', 0))
                         
+                        # 更新币种信息
+                        currency = order_data.get('currencyCode')
+                        if currency and currency in dict(Order.CURRENCY_CHOICES):
+                            order.currency = currency
+                        
                         # 更新备注信息
                         order.system_remark = order_data.get('erpRemark', '').strip()
                         order.cs_remark = order_data.get('csRemark', '').strip()
@@ -292,7 +297,8 @@ class WDTOrderSync:
                             system_remark=order_data.get('erpRemark', '').strip(),
                             cs_remark=order_data.get('csRemark', '').strip(),
                             buyer_remark=order_data.get('buyerMessage', '').strip(),
-                            total_amount=float(order_data.get('receivable', 0))
+                            total_amount=float(order_data.get('receivable', 0)),
+                            currency=order_data.get('currencyCode') if order_data.get('currencyCode') in dict(Order.CURRENCY_CHOICES) else None  # 设置币种，无效时为空
                         )
                         order.save()
                         logger.info(f"订单基本信息创建成功: {order_number}")

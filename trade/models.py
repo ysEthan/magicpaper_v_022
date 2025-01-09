@@ -73,6 +73,13 @@ class Order(models.Model):
         ('employee', _('员工自购')),
     )
 
+    CURRENCY_CHOICES = (
+        ('CNY', '人民币'),
+        ('USD', '美元'),
+        ('EUR', '欧元'),
+        ('GBP', '英镑'),
+    )
+
     order_number = models.CharField(max_length=50, unique=True, verbose_name='订单编号')
     platform_order_number = models.CharField(
         max_length=50,
@@ -109,6 +116,12 @@ class Order(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)],
         verbose_name='订单总金额'
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        default='CNY',
+        verbose_name='币种'
     )
     shipping_fee = models.DecimalField(
         max_digits=10,

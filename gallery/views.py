@@ -5,9 +5,12 @@ from .models import Brand, Category, SPU, SKU
 from .forms import BrandForm, CategoryForm, SPUForm, SKUForm
 from .sync import ProductSync
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum, F
 from django.db.models.functions import Lower
 from django.utils import timezone
+from django.core.cache import cache
+from datetime import timedelta
+import json
 
 # Brand views
 @login_required
@@ -308,75 +311,74 @@ def sync_products(request):
 
 @login_required
 def report(request):
-    """商品报表页面"""
-    today = timezone.now()
-    month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    # 使用缓存，缓存时间设为5分钟
+    cache_key = 'gallery_report_data'
+    report_data = cache.get(cache_key)
     
-    # 总体统计
-    total_products = SPU.objects.count()
-    new_products_today = SPU.objects.filter(created_at__date=today.date()).count()
-    new_products_month = SPU.objects.filter(created_at__gte=month_start).count()
+    if report_data is None:
+        today = timezone.now()
+        month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # 商品统计 - 使用单次查询
+        products = SPU.objects.all()
+        total_products = products.count()
+        new_products_today = products.filter(created_at__date=today.date()).count()
+        new_products_month = products.filter(created_at__gte=month_start).count()
+        active_products = products.filter(status=True).count()
+        inactive_products = products.filter(status=False).count()
+        
+        # 品牌统计 - 使用聚合查询
+        brands = Brand.objects.annotate(
+            spu_count=Count('spu'),
+        ).filter(spu_count__gt=0).order_by('-spu_count')[:10]
+        
+        brand_stats = []
+        for brand in brands:
+            brand_stats.append({
+                'name': brand.name,
+                'spu_count': brand.spu_count,
+            })
+        
+        # 分类统计 - 使用聚合查询
+        categories = Category.objects.annotate(
+            spu_count=Count('spu'),
+        ).filter(spu_count__gt=0).order_by('-spu_count')[:10]
+        
+        category_stats = []
+        for category in categories:
+            category_stats.append({
+                'name': category.category_name_zh,
+                'spu_count': category.spu_count,
+            })
+        
+        # 趋势数据 - 优化查询，使用聚合函数
+        dates = [(today - timedelta(days=i)).date() for i in range(29, -1, -1)]
+        
+        trend_data = list(SPU.objects.filter(
+            created_at__date__gte=dates[0]
+        ).values('created_at__date').annotate(
+            count=Count('id')
+        ).order_by('created_at__date'))
+        
+        product_trend = [0] * 30
+        for item in trend_data:
+            index = dates.index(item['created_at__date'])
+            product_trend[index] = item['count']
+        
+        report_data = {
+            'total_products': total_products,
+            'new_products_today': new_products_today,
+            'new_products_month': new_products_month,
+            'active_products': active_products,
+            'inactive_products': inactive_products,
+            'active_rate': round(active_products / total_products * 100 if total_products > 0 else 0, 1),
+            'inactive_rate': round(inactive_products / total_products * 100 if total_products > 0 else 0, 1),
+            'brand_stats': brand_stats,
+            'category_stats': category_stats,
+            'product_trend': json.dumps(product_trend)
+        }
+        
+        # 设置缓存，5分钟过期
+        cache.set(cache_key, report_data, 300)
     
-    # 计算活跃商品（有库存或有销量的商品）
-    active_products = SPU.objects.filter(
-        Q(sku__inventories__quantity__gt=0) |
-        Q(sku__order_items__isnull=False)
-    ).distinct().count()
-    
-    # 计算缺货商品
-    out_of_stock = SPU.objects.filter(
-        sku__inventories__quantity=0
-    ).distinct().count()
-    
-    # 计算百分比
-    active_products_percentage = round((active_products / total_products * 100) if total_products > 0 else 0, 1)
-    out_of_stock_percentage = round((out_of_stock / total_products * 100) if total_products > 0 else 0, 1)
-    
-    # 计算环比（与上月相比的增长率）
-    last_month_start = month_start.replace(month=month_start.month-1 if month_start.month > 1 else 12)
-    last_month_new = SPU.objects.filter(
-        created_at__gte=last_month_start,
-        created_at__lt=month_start
-    ).count()
-    month_over_month = round(
-        ((new_products_month - last_month_new) / last_month_new * 100) if last_month_new > 0 else 0,
-        1
-    )
-    
-    # 按品牌统计
-    brands = Brand.objects.annotate(
-        total_products=Count('spu', distinct=True),
-        active_products=Count(
-            'spu',
-            filter=Q(spu__sku__inventories__quantity__gt=0) |
-                   Q(spu__sku__order_items__isnull=False),
-            distinct=True
-        ),
-        new_products=Count(
-            'spu',
-            filter=Q(spu__created_at__gte=month_start),
-            distinct=True
-        ),
-        out_of_stock=Count(
-            'spu',
-            filter=Q(spu__sku__inventories__quantity=0),
-            distinct=True
-        )
-    )
-    
-    context = {
-        'total_products': total_products,
-        'new_products_today': new_products_today,
-        'new_products_month': new_products_month,
-        'active_products': active_products,
-        'active_products_percentage': active_products_percentage,
-        'out_of_stock': out_of_stock,
-        'out_of_stock_percentage': out_of_stock_percentage,
-        'month_over_month': month_over_month,
-        'brands': brands,
-        'current_month': today.strftime('%Y年%m月'),
-        'active_menu': 'gallery',
-        'active_submenu': 'report'
-    }
-    
-    return render(request, 'gallery/report.html', context)
+    return render(request, 'gallery/report.html', report_data)
