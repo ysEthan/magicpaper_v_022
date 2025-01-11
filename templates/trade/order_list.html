@@ -96,12 +96,13 @@
     <!-- 订单列表 -->
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-vcenter card-table">
+            <table class="table table-vcenter card-table table-nowrap">
                 <thead>
                     <tr>
                         <th style="width: 220px;">基本信息</th>
                         <th style="width: 220px;">收货人</th>
-                        <th style="width: 220px;">仓配信息</th>
+                        <th style="width: 280px;">仓配信息</th>
+                        <th style="width: 220px;">备注信息</th>
                         <th>时间信息</th>
                         <th class="w-1"></th>
                     </tr>
@@ -194,8 +195,30 @@
                             </div>
                         </td>
                         <td>
+                            <div class="d-flex flex-column gap-1">
+                                {% if order.buyer_remark %}
+                                <div class="small">
+                                    <span class="badge bg-yellow-lt">买家</span>
+                                    <span class="text-muted">{{ order.buyer_remark }}</span>
+                                </div>
+                                {% endif %}
+                                {% if order.cs_remark %}
+                                <div class="small">
+                                    <span class="badge bg-purple-lt">客服</span>
+                                    <span class="text-muted">{{ order.cs_remark }}</span>
+                                </div>
+                                {% endif %}
+                                {% if order.system_remark %}
+                                <div class="small">
+                                    <span class="badge bg-blue-lt">系统</span>
+                                    <span class="text-muted">{{ order.system_remark }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
                             <div class="d-flex flex-column">
-                                <div>下单：{{ order.updated_at|date:"Y-m-d H:i" }}</div>
+                                <div>下单：{{ order.order_place_time|date:"Y-m-d H:i" }}</div>
                                 <div class="text-muted">
                                     发货：{% if order.package.shipped_time %}{{ order.package.shipped_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
                                 </div>
@@ -206,16 +229,16 @@
                         </td>
                         <td>
                             <div class="btn-list">
-                                <a href="{% url 'trade:order_detail' order.pk %}" class="btn btn-primary btn-icon" title="订单详情">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <a href="{% url 'trade:order_detail' order.pk %}" class="btn-sm btn-primary btn-icon" title="订单详情">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                                         <circle cx="12" cy="12" r="2" />
                                         <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
                                     </svg>
                                 </a>
                                 {% if order.package %}
-                                <a href="{% url 'logistics:package_detail' order.package.pk %}" class="btn btn-azure btn-icon" title="包裹详情">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <a href="{% url 'logistics:package_detail' order.package.pk %}" class="btn-sm btn-azure btn-icon" title="包裹详情">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-sm" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                                         <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                                         <path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" />
                                         <path d="M12 12l8 -4.5" />

@@ -19,6 +19,7 @@
     box-shadow: rgba(35, 46, 60, 0.15) 0 4px 12px 0 !important;
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     cursor: pointer;
+    height: 180px !important;  /* 添加固定高度 */
 }
 .card:hover {
     transform: translateY(-2px);
@@ -37,8 +38,10 @@
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">订单统计</div>
-                                    <div class="total-value mb-1">{{ total_orders }}</div>
+                                    <div class="h3 mb-1 d-flex align-items-center">
+                                        <span>订单统计</span>
+                                        <span class="total-value ms-3">{{ total_orders }}</span>
+                                    </div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
                                             <span class="text-blue d-inline-flex align-items-center">
@@ -66,21 +69,23 @@
                                         </span>
                                     </div>
                                 </div>
-                <div class="col">
-                                    <div id="order-trend" style="height: 120px"></div>
+                                <div class="col">
+                                    <div id="order-trend" style="height: 100px"></div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
                 <!-- 物流统计 -->
                 <div class="col-md-4">
                     <div class="card h-100" onclick="window.location.href='{% url 'logistics:report' %}'">
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">包裹统计</div>
-                                    <div class="total-value mb-1">{{ total_packages }}</div>
+                                    <div class="h3 mb-1 d-flex align-items-center">
+                                        <span>包裹统计</span>
+                                        <span class="total-value ms-3">{{ total_packages }}</span>
+                                    </div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
                                             <span class="text-orange d-inline-flex align-items-center">
@@ -124,8 +129,10 @@
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">商品总数</div>
-                                    <div class="total-value mb-1">{{ total_products }}</div>
+                                    <div class="h3 mb-1 d-flex align-items-center">
+                                        <span>商品总数</span>
+                                        <span class="total-value ms-3">{{ total_products }}</span>
+                                    </div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
                                             <span class="text-orange d-inline-flex align-items-center">
@@ -154,8 +161,10 @@
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">库存总数</div>
-                                    <div class="total-value mb-1">{{ total_inventory }}</div>
+                                    <div class="h3 mb-1 d-flex align-items-center">
+                                        <span>库存总数</span>
+                                        <span class="total-value ms-3">{{ total_inventory }}</span>
+                                    </div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
                                             <span class="text-green d-inline-flex align-items-center">
@@ -197,8 +206,10 @@
                         <div class="card-body p-3 d-flex flex-column">
                             <div class="row align-items-center flex-grow-1">
                                 <div class="col-auto">
-                                    <div class="h3 mb-1">进行中采购单</div>
-                                    <div class="total-value mb-1">{{ active_purchase_orders }}</div>
+                                    <div class="h3 mb-1 d-flex align-items-center">
+                                        <span>进行中采购单</span>
+                                        <span class="total-value ms-3">{{ active_purchase_orders }}</span>
+                                    </div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
                                             <span class="text-blue d-inline-flex align-items-center">
