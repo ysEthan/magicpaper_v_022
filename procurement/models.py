@@ -43,7 +43,9 @@ class PurchaseOrder(BaseModel):
     )
 
     order_number = models.CharField('订单编号', max_length=50, unique=True)
+    order_time = models.DateTimeField('下单时间', null=True, blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, verbose_name='供应商')
+    warehouse_id = models.IntegerField('仓库ID', null=True, blank=True)
     status = models.CharField('订单状态', max_length=20, choices=ORDER_STATUS_CHOICES, default='draft')
     total_amount = models.DecimalField('总金额', max_digits=10, decimal_places=2, default=0)
     expected_delivery_date = models.DateField('预计交付日期')

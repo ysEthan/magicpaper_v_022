@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier
 from gallery.models import SKU
+from storage.models import Warehouse
 
 
 def generate_sign(body):
@@ -45,7 +46,7 @@ def sync_purchase_data(start_date, end_date, page=1):
         "pageNo": page,
         "createTimeBegin": start_date,
         "createTimeEnd": end_date,
-        "orderStatus": [40, 42, 75, 70, 10],  # 待下单 待支付 待入库 已完成 已作废
+        "orderStatus": [40, 42, 75, 70],  # 待下单 待支付 待入库 已完成 已作废
         "account": "admin"
     }
     
@@ -84,11 +85,22 @@ def sync_purchase_data(start_date, end_date, page=1):
         print(f"处理第{item_count}条采购单:{item['purchaseNo']}:{item['status']}")
         try:
             # 检查必要字段
-            required_fields = ['purchaseNo', 'status', 'created', 'providerName', 'specNo']
+            required_fields = ['purchaseNo', 'status', 'created', 'providerName', 'specNo', 'warehouseId']
             if not all(field in item for field in required_fields):
+                print(f"缺少必要字段: {item['purchaseNo']}")
                 error_count += 1
                 continue
             print("必要字段存在")
+
+            # 验证仓库是否存在
+            warehouse_id = item.get('warehouseId')
+            try:
+                warehouse = Warehouse.objects.get(id=warehouse_id)
+            except Warehouse.DoesNotExist:
+                print(f"仓库不存在: {warehouse_id}, 采购单号: {item['purchaseNo']}")
+                error_count += 1
+                continue
+            print(f"仓库ID {warehouse_id} 验证成功")
 
             # 获取状态
             status = status_mapping.get(item['status'])
@@ -129,6 +141,8 @@ def sync_purchase_data(start_date, end_date, page=1):
                 'supplier': supplier,
                 'status': status,
                 'total_amount': total_amount,
+                'order_time': trade_time if trade_time else None,
+                'warehouse_id': warehouse.id,
                 'expected_delivery_date': trade_time.date() if trade_time else created_time.date(),
                 'actual_delivery_date': None,
                 'remark': item.get('remark', '')
