@@ -214,6 +214,7 @@ class SKU(models.Model):
     other_dimensions = models.CharField(max_length=25, null=True, blank=True, verbose_name='其他尺寸')
     suppliers_list = models.TextField(verbose_name='供应商列表', default='[]', blank=True)
     img_url = models.CharField(max_length=255, null=True, blank=True, verbose_name='图片URL')
+    is_reviewed = models.BooleanField(default=False, verbose_name='是否已审核')
     status = models.BooleanField(default=True, verbose_name='状态')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')

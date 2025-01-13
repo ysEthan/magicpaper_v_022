@@ -319,17 +319,19 @@ def report(request):
         today = timezone.now()
         month_start = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # 商品统计 - 使用单次查询
-        products = SPU.objects.all()
-        total_products = products.count()
-        new_products_today = products.filter(created_at__date=today.date()).count()
-        new_products_month = products.filter(created_at__gte=month_start).count()
-        active_products = products.filter(status=True).count()
-        inactive_products = products.filter(status=False).count()
+        # SKU统计 - 使用单次查询
+        skus = SKU.objects.all()
+        total_products = skus.count()
+        new_products_today = skus.filter(created_at__date=today.date()).count()
+        new_products_month = skus.filter(created_at__gte=month_start).count()
+        active_products = skus.filter(status=True).count()
+        
+        # 未审核SKU统计
+        unreviewed_skus = skus.filter(is_reviewed=False).count()
         
         # 品牌统计 - 使用聚合查询
         brands = Brand.objects.annotate(
-            spu_count=Count('spu'),
+            spu_count=Count('spu__sku', distinct=True),  # 统计每个品牌下的SKU数量
         ).filter(spu_count__gt=0).order_by('-spu_count')[:10]
         
         brand_stats = []
@@ -341,7 +343,7 @@ def report(request):
         
         # 分类统计 - 使用聚合查询
         categories = Category.objects.annotate(
-            spu_count=Count('spu'),
+            spu_count=Count('spu__sku', distinct=True),  # 统计每个分类下的SKU数量
         ).filter(spu_count__gt=0).order_by('-spu_count')[:10]
         
         category_stats = []
@@ -350,11 +352,11 @@ def report(request):
                 'name': category.category_name_zh,
                 'spu_count': category.spu_count,
             })
-        
+
         # 趋势数据 - 优化查询，使用聚合函数
         dates = [(today - timedelta(days=i)).date() for i in range(29, -1, -1)]
         
-        trend_data = list(SPU.objects.filter(
+        trend_data = list(SKU.objects.filter(  # 改为统计SKU的趋势
             created_at__date__gte=dates[0]
         ).values('created_at__date').annotate(
             count=Count('id')
@@ -370,9 +372,9 @@ def report(request):
             'new_products_today': new_products_today,
             'new_products_month': new_products_month,
             'active_products': active_products,
-            'inactive_products': inactive_products,
             'active_rate': round(active_products / total_products * 100 if total_products > 0 else 0, 1),
-            'inactive_rate': round(inactive_products / total_products * 100 if total_products > 0 else 0, 1),
+            'unreviewed_products': unreviewed_skus,
+            'unreviewed_rate': round(unreviewed_skus / total_products * 100 if total_products > 0 else 0, 1),
             'brand_stats': brand_stats,
             'category_stats': category_stats,
             'product_trend': json.dumps(product_trend)
