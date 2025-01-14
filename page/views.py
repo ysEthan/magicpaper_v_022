@@ -58,15 +58,17 @@ def index_view(request):
     )
     
     # 初始化各状态包裹数量
-    waiting_pickup_packages = 0  # 待揽收 (1)
-    in_transit_packages = 0      # 转运中 (2)
-    delivered_packages = 0       # 已签收 (3)
+    pending_shipment_packages = 0  # 待发货 (0)
+    waiting_pickup_packages = 0    # 待揽收 (1)
+    in_transit_packages = 0        # 转运中 (2)
+    delivered_packages = 0         # 已签收 (3)
     
     # 遍历统计结果，分配到对应的变量
     stats_dict = {stat['pkg_status_code']: stat['count'] for stat in package_stats}
-    waiting_pickup_packages = stats_dict.get('1', 0)  # 待揽收
-    in_transit_packages = stats_dict.get('2', 0)      # 转运中
-    delivered_packages = stats_dict.get('3', 0)       # 已签收
+    pending_shipment_packages = stats_dict.get('0', 0)  # 待发货
+    waiting_pickup_packages = stats_dict.get('1', 0)    # 待揽收
+    in_transit_packages = stats_dict.get('2', 0)        # 转运中
+    delivered_packages = stats_dict.get('3', 0)         # 已签收
     
     # 计算包裹总数（排除已取消的包裹）
     total_packages = sum(stat['count'] for stat in package_stats)
@@ -198,6 +200,7 @@ def index_view(request):
         'purchase_trend': json.dumps(purchase_trend_data),
         
         'total_packages': total_packages,
+        'pending_shipment_packages': pending_shipment_packages,
         'waiting_pickup_packages': waiting_pickup_packages,
         'in_transit_packages': in_transit_packages,
         'delivered_packages': delivered_packages,

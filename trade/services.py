@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 from .models import Order, Shop, Cart
 from gallery.models import SKU
 from storage.models import Warehouse
-from logistics.models import Service, Package
+from logistics.models import Service, Package, Tracking
 
 # 获取logger实例
 logger = logging.getLogger(__name__)
@@ -25,6 +25,7 @@ class WDTOrderSync:
         'pending': '0',    # 待发货
         'picking': '1',    # 待揽收
         'shipped': '2',    # 转运中
+        'delivered': '3',  # 已签收
         'cancelled': '4',  # 已取消
     }
     
@@ -143,8 +144,10 @@ class WDTOrderSync:
             '待发货': 'pending',
             '配货中': 'picking',
             '已发货': 'shipped',
+            '已签收': 'delivered',
             '已取消': 'cancelled'
         }
+        logger.info(f"收到订单状态: {status_desc}, 映射为: {status_map.get(status_desc, 'pending')}")
         return status_map.get(status_desc, 'pending')
 
     def sync_orders(self):
@@ -187,12 +190,15 @@ class WDTOrderSync:
                         logger.error("订单数据缺少订单号")
                         continue
                     logger.info(f"处理订单 [{index}/{len(orders_data)}]: {order_number}================================================================================")
+                    logger.info(f"订单状态描述: {order_data.get('tradeStatusDesc')}")
                     order = Order.objects.filter(order_number=order_number).first()
                     
                     if order:
                         logger.info(f"订单 {order_number} 已存在，执行更新操作")
                         # 更新已存在的订单
-                        order.status = self._get_order_status(order_data.get('tradeStatusDesc', '待处理'))
+                        new_status = self._get_order_status(order_data.get('tradeStatusDesc', '待处理'))
+                        logger.info(f"订单 {order_number} 状态更新: {order.status} -> {new_status}")
+                        order.status = new_status
                         order.payment_status = order_data.get('tradeStatusDesc') not in ['待付款', '已取消']
                         order.total_amount = float(order_data.get('receivable', 0))
                         
@@ -225,16 +231,12 @@ class WDTOrderSync:
                         # 更新包裹状态
                         try:
                             package = Package.objects.get(order=order)
-                            # 根据订单状态更新包裹状态
-                            new_status = self.PACKAGE_STATUS_MAP.get(order.status, '0')
-                            
                             # 获取物流服务和仓库
                             logistics_text = order_data.get('logisticsText', '')
                             service = self._get_service_by_name(logistics_text)
                             warehouse = self._get_warehouse_by_code(order_data.get('warehouseNo'))
                             
-                            # 更新包裹信息
-                            package.pkg_status_code = new_status
+                            # 更新包裹信息，但不更新状态
                             package.tracking_no = order_data.get('logisticsNo', '')
                             if service:  # 只在找到服务时更新
                                 package.service = service
@@ -242,7 +244,23 @@ class WDTOrderSync:
                                 package.warehouse = warehouse
                             
                             package.save()
-                            logger.info(f"包裹信息已更新: {order_number}, 状态: {new_status}, 物流单号: {package.tracking_no}, 物流服务: {service or '未找到'}, 仓库: {warehouse or '未找到'}")
+                            logger.info(f"包裹信息已更新: {order_number}, 物流单号: {package.tracking_no}, 物流服务: {service or '未找到'}, 仓库: {warehouse or '未找到'}")
+                            
+                            # 如果有发货时间，创建发货轨迹记录，包裹状态会随轨迹记录更新
+                            delivery_time = order_data.get('deliveryTime')
+                            if delivery_time and not Tracking.objects.filter(package=package, status=1).exists():
+                                delivery_time = datetime.strptime(delivery_time, '%Y-%m-%dT%H:%M:%S')
+                                self._create_tracking_record(
+                                    package=package,
+                                    status=1,  # 待揽收
+                                    description="包裹已发货，等待揽收",
+                                    tracking_time=delivery_time
+                                )
+                                # 更新包裹状态为待揽收
+                                package.pkg_status_code = '1'
+                                package.save()
+                                logger.info(f"包裹状态已更新为待揽收: {order_number}")
+                                
                         except Package.DoesNotExist:
                             logger.warning(f"订单 {order_number} 没有关联的包裹，尝试创建新包裹")
                             try:
@@ -275,22 +293,48 @@ class WDTOrderSync:
                                         logger.error(f"找不到SKU: {item['skuNo']}, 订单号: {order_number}")
                                         continue
 
-                                # 创建包裹
+                                # 创建包裹，初始状态为待发货
                                 package = Package(
                                     order=order,
                                     warehouse=warehouse,
                                     service=service,
                                     tracking_no=order_data.get('logisticsNo', ''),
-                                    pkg_status_code=self.PACKAGE_STATUS_MAP.get(order.status, '0'),
+                                    pkg_status_code='0',  # 初始状态为待发货
                                     items=items_data
                                 )
                                 package.save()
+                                
+                                # 创建包裹创建轨迹记录，使用订单创建时间
+                                self._create_tracking_record(
+                                    package=package,
+                                    status=0,  # 待发货
+                                    description="包裹已创建",
+                                    tracking_time=order.order_place_time or timezone.now()  # 使用订单创建时间，如果为空则使用当前时间
+                                )
+                                
+                                # 如果有发货时间，创建发货轨迹记录并更新包裹状态
+                                delivery_time = order_data.get('deliveryTime')
+                                if delivery_time:
+                                    delivery_time = datetime.strptime(delivery_time, '%Y-%m-%dT%H:%M:%S')
+                                    self._create_tracking_record(
+                                        package=package,
+                                        status=1,  # 待揽收
+                                        description="包裹已发货，等待揽收",
+                                        tracking_time=delivery_time
+                                    )
+                                    # 更新包裹状态为待揽收
+                                    package.pkg_status_code = '1'
+                                    package.save()
+                                    logger.info(f"包裹状态已更新为待揽收: {order_number}")
                                 
                                 # 更新订单的package_id字段
                                 order.package_id = str(package.id)
                                 order.save()
                                 
-                                logger.info(f"为已存在订单创建包裹成功，包裹ID: {package.id}")
+                                logger.info(f"创建包裹成功，包裹ID: {package.id}, 物流单号: {package.tracking_no}, 物流服务: {service}, 仓库: {warehouse}")
+
+                                result['created'] += 1
+                                logger.info(f"订单 {order_number} 及其包裹创建成功")
                             except Exception as e:
                                 logger.error(f"为已存在订单创建包裹失败: {str(e)}")
                         except Exception as e:
@@ -409,6 +453,24 @@ class WDTOrderSync:
                         )
                         package.save()
                         
+                        # 创建包裹创建轨迹记录
+                        self._create_tracking_record(
+                            package=package,
+                            status=0,  # 待发货
+                            description="包裹已创建"
+                        )
+                        
+                        # 如果有发货时间，创建发货轨迹记录
+                        delivery_time = order_data.get('deliveryTime')
+                        if delivery_time:
+                            delivery_time = datetime.strptime(delivery_time, '%Y-%m-%dT%H:%M:%S')
+                            self._create_tracking_record(
+                                package=package,
+                                status=1,  # 待揽收
+                                description="包裹已发货，等待揽收",
+                                tracking_time=delivery_time
+                            )
+                        
                         # 更新订单的package_id字段
                         order.package_id = str(package.id)
                         order.save()
@@ -460,3 +522,20 @@ class WDTOrderSync:
         except Exception as e:
             logger.error(f"查找仓库失败: {str(e)}")
             return None 
+
+    def _create_tracking_record(self, package, status, description, tracking_time=None):
+        """创建包裹轨迹记录"""
+        try:
+            if not tracking_time:
+                tracking_time = timezone.now()
+            
+            Tracking.objects.create(
+                package=package,
+                status=status,
+                location=package.warehouse.warehouse_name if package.warehouse else '',
+                description=description,
+                tracking_time=tracking_time
+            )
+            logger.info(f"创建包裹轨迹记录成功: {package.tracking_no}, 状态: {status}")
+        except Exception as e:
+            logger.error(f"创建包裹轨迹记录失败: {str(e)}") 

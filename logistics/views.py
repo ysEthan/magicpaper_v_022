@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.db.models import Q, Count, Sum, F
+from django.db.models import Q, Count, Sum, F, OuterRef, Subquery
 from django.utils import timezone
 from .models import Carrier, Service, Package, Tracking
 import json
@@ -37,11 +37,13 @@ def carrier_list(request):
 @login_required
 def carrier_detail(request, pk):
     carrier = get_object_or_404(Carrier, pk=pk)
-    services = carrier.service_set.all()
+    services = carrier.services.all()
     
     return render(request, 'logistics/carrier/detail.html', {
         'carrier': carrier,
-        'services': services
+        'services': services,
+        'active_menu': 'logistics',
+        'active_submenu': 'carrier'
     })
 
 @login_required
@@ -84,9 +86,19 @@ def service_detail(request, pk):
 
 @login_required
 def package_list(request):
+    """包裹列表页面"""
     search_term = request.GET.get('search', '')
     status = request.GET.get('status', '')
-    packages = Package.objects.all()
+    carrier_id = request.GET.get('carrier', '')
+    
+    packages = Package.objects.annotate(
+        pending_time=Subquery(
+            Tracking.objects.filter(
+                package=OuterRef('pk'),
+                status=0
+            ).values('tracking_time')[:1]
+        )
+    ).order_by('-pending_time', '-created_at')
     
     if search_term:
         packages = packages.filter(
@@ -96,14 +108,20 @@ def package_list(request):
     
     if status:
         packages = packages.filter(pkg_status_code=status)
+        
+    if carrier_id:
+        packages = packages.filter(service__carrier_id=carrier_id)
     
+    carriers = Carrier.objects.all()
     paginator = Paginator(packages, 20)
     page = request.GET.get('page')
     packages = paginator.get_page(page)
     
     return render(request, 'logistics/package/list.html', {
         'packages': packages,
+        'carriers': carriers,
         'search_term': search_term,
+        'carrier_id': carrier_id,
         'status': status,
         'status_choices': Package.STATUS_CHOICES,
         'active_menu': 'logistics',
@@ -114,6 +132,28 @@ def package_list(request):
 def package_detail(request, pk):
     package = get_object_or_404(Package, pk=pk)
     tracking_records = package.tracking_records.all().order_by('-tracking_time')
+    
+    if request.method == 'POST':
+        try:
+            # Create new tracking record
+            tracking = Tracking.objects.create(
+                package=package,
+                status=int(request.POST.get('status')),
+                location=request.POST.get('location'),
+                description=request.POST.get('description'),
+                tracking_time=request.POST.get('tracking_time'),
+                operator=request.user
+            )
+            
+            # Update package status
+            package.pkg_status_code = str(tracking.status)
+            package.save()
+            
+            messages.success(request, _('物流轨迹添加成功'))
+        except Exception as e:
+            messages.error(request, _('物流轨迹添加失败：{}').format(str(e)))
+        
+        return redirect('logistics:package_detail', pk=pk)
     
     return render(request, 'logistics/package/detail.html', {
         'package': package,

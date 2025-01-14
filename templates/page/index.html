@@ -101,6 +101,12 @@
                                     </div>
                                     <div class="row g-2 align-items-center mt-2">
                                         <div class="col-auto">
+                                            <span class="text-gray d-inline-flex align-items-center">
+                                                <span class="text-muted me-1">待发货</span>
+                                                <span class="metric-value">{{ pending_shipment_packages }}</span>
+                                            </span>
+                                        </div>
+                                        <div class="col-auto ms-2">
                                             <span class="text-orange d-inline-flex align-items-center">
                                                 <span class="text-muted me-1">待揽收</span>
                                                 <span class="metric-value">{{ waiting_pickup_packages }}</span>

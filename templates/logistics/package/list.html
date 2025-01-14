@@ -67,6 +67,7 @@
                         <th>{% trans '体积' %}</th>
                         <th>{% trans '预估费用' %}</th>
                         <th>{% trans '实际费用' %}</th>
+                        <th>{% trans '待发货时间' %}</th>
                         <th class="w-1"></th>
                     </tr>
                 </thead>
@@ -99,6 +100,7 @@
                         <td>{{ package.volume|default:'-' }}</td>
                         <td>{{ package.estimated_logistics_cost }}</td>
                         <td>{{ package.carrier_cost|default:'-' }}</td>
+                        <td>{{ package.pending_time|date:"Y-m-d H:i"|default:'-' }}</td>
                         <td>
                             <div class="btn-list flex-nowrap">
                                 <a href="{% url 'logistics:package_detail' package.pk %}" class="btn btn-white btn-sm">
