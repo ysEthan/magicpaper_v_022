@@ -190,7 +190,7 @@
                                         {% endif %}
                                     </div>
                                 {% else %}
-                                    <div class="text-muted small">未分配包裹</div>
+                                    <div class="text-muted small">暂无包裹信息</div>
                                 {% endif %}
                             </div>
                         </td>
@@ -220,10 +220,10 @@
                             <div class="d-flex flex-column">
                                 <div>下单：{{ order.order_place_time|date:"Y-m-d H:i" }}</div>
                                 <div class="text-muted">
-                                    发货：{% if order.package.shipped_time %}{{ order.package.shipped_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+                                    发货：{% if order.package and order.package.shipped_time %}{{ order.package.shipped_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
                                 </div>
                                 <div class="text-muted">
-                                    签收：{% if order.package.delivered_time %}{{ order.package.delivered_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+                                    签收：{% if order.package and order.package.delivered_time %}{{ order.package.delivered_time|date:"Y-m-d H:i" }}{% else %}-{% endif %}
                                 </div>
                             </div>
                         </td>

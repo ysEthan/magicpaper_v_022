@@ -29,7 +29,8 @@ class OrderListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related(
-            'shop',
+            'shop'
+        ).prefetch_related(
             'package',
             'package__warehouse',
             'package__service',
@@ -43,12 +44,15 @@ class OrderListView(LoginRequiredMixin, ListView):
         logger.debug("Querying orders with package info")
         for order in queryset[:5]:  # 只检查前5个订单
             logger.debug(f"Order {order.order_number}:")
-            logger.debug(f"- Package: {order.package}")
-            if order.package:
-                logger.debug(f"- Warehouse: {order.package.warehouse}")
-                logger.debug(f"- Service: {order.package.service}")
-                if order.package.service:
-                    logger.debug(f"- Carrier: {order.package.service.carrier}")
+            try:
+                logger.debug(f"- Package: {order.package}")
+                if order.package:
+                    logger.debug(f"- Warehouse: {order.package.warehouse}")
+                    logger.debug(f"- Service: {order.package.service}")
+                    if order.package.service:
+                        logger.debug(f"- Carrier: {order.package.service.carrier}")
+            except Order.package.RelatedObjectDoesNotExist:
+                logger.debug("- No package associated")
 
         # 获取过滤参数
         status = self.request.GET.get('status')

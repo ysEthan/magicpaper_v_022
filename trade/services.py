@@ -19,6 +19,15 @@ logger = logging.getLogger(__name__)
 class WDTOrderSync:
     """旺店通订单同步服务"""
     
+    # 包裹状态映射
+    PACKAGE_STATUS_MAP = {
+        'unpaid': '0',    # 待发货
+        'pending': '0',    # 待发货
+        'picking': '1',    # 待揽收
+        'shipped': '2',    # 转运中
+        'cancelled': '4',  # 已取消
+    }
+    
     def __init__(self):
         self.base_url = "https://openapi.qizhishangke.com/api/openservices/trade/v1"
         self.app_name = "mathmagic"
@@ -77,7 +86,7 @@ class WDTOrderSync:
         }
         return params, headers
 
-    def get_trade_list(self, start_date=None, end_date=None, page=1):
+    def get_trade_list(self, start_date='2025-01-01 00:00:00', end_date=None, page=1):
         """获取订单列表"""
         if not start_date:
             start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
@@ -91,6 +100,7 @@ class WDTOrderSync:
             "pageNo": page,
             "pageSize": 100
         }
+        print(body) 
         body_str = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
         params, headers = self.generate_sign(body_str)
         
@@ -169,21 +179,14 @@ class WDTOrderSync:
             result['total'] = len(orders_data)
             logger.info(f"开始同步订单，当前页：{current_page}，本页数据：{result['total']}，总订单数：{total_orders}")
 
-            # 获取默认物流服务
-            default_service = self._get_default_service()
-
-            if not default_service:
-                raise Exception("系统中没有可用的物流服务")
-
-            for order_data in orders_data:
+            for index, order_data in enumerate(orders_data, 1):
                 try:
                     # 检查订单是否已存在
                     order_number = order_data.get('tradeNo')
                     if not order_number:
                         logger.error("订单数据缺少订单号")
                         continue
-
-                    logger.info(f"处理订单: {order_number}")
+                    logger.info(f"处理订单 [{index}/{len(orders_data)}]: {order_number}================================================================================")
                     order = Order.objects.filter(order_number=order_number).first()
                     
                     if order:
@@ -223,14 +226,7 @@ class WDTOrderSync:
                         try:
                             package = Package.objects.get(order=order)
                             # 根据订单状态更新包裹状态
-                            status_map = {
-                                'unpaid': '0',    # 待发货
-                                'pending': '0',    # 待发货
-                                'picking': '1',    # 待揽收
-                                'shipped': '2',    # 转运中
-                                'cancelled': '4',  # 已取消
-                            }
-                            new_status = status_map.get(order.status, '0')
+                            new_status = self.PACKAGE_STATUS_MAP.get(order.status, '0')
                             
                             # 获取物流服务和仓库
                             logistics_text = order_data.get('logisticsText', '')
@@ -248,7 +244,55 @@ class WDTOrderSync:
                             package.save()
                             logger.info(f"包裹信息已更新: {order_number}, 状态: {new_status}, 物流单号: {package.tracking_no}, 物流服务: {service or '未找到'}, 仓库: {warehouse or '未找到'}")
                         except Package.DoesNotExist:
-                            logger.warning(f"订单 {order_number} 没有关联的包裹")
+                            logger.warning(f"订单 {order_number} 没有关联的包裹，尝试创建新包裹")
+                            try:
+                                # 获取物流服务
+                                service = self._get_service_by_name(order_data.get('logisticsText'))
+                                if not service:
+                                    logger.info(f"订单 {order_number} 没有物流服务信息，跳过包裹创建")
+                                    continue
+
+                                # 获取仓库
+                                warehouse = self._get_warehouse_by_code(order_data.get('warehouseNo'))
+                                if not warehouse:
+                                    logger.error(f"订单 {order_number} 找不到对应的仓库，跳过包裹创建")
+                                    continue
+
+                                # 获取订单明细
+                                details = self.get_trade_detail(order_data['tradeId'])
+                                items_data = []
+                                
+                                # 准备包裹商品数据
+                                for item in details:
+                                    try:
+                                        sku = SKU.objects.get(sku_code=item['skuNo'])
+                                        items_data.append({
+                                            'sku_code': sku.sku_code,
+                                            'sku_name': sku.sku_name,
+                                            'quantity': int(item.get('num', 0))
+                                        })
+                                    except SKU.DoesNotExist:
+                                        logger.error(f"找不到SKU: {item['skuNo']}, 订单号: {order_number}")
+                                        continue
+
+                                # 创建包裹
+                                package = Package(
+                                    order=order,
+                                    warehouse=warehouse,
+                                    service=service,
+                                    tracking_no=order_data.get('logisticsNo', ''),
+                                    pkg_status_code=self.PACKAGE_STATUS_MAP.get(order.status, '0'),
+                                    items=items_data
+                                )
+                                package.save()
+                                
+                                # 更新订单的package_id字段
+                                order.package_id = str(package.id)
+                                order.save()
+                                
+                                logger.info(f"为已存在订单创建包裹成功，包裹ID: {package.id}")
+                            except Exception as e:
+                                logger.error(f"为已存在订单创建包裹失败: {str(e)}")
                         except Exception as e:
                             logger.error(f"更新包裹状态失败: {order_number}, 错误: {str(e)}")
 
@@ -312,7 +356,7 @@ class WDTOrderSync:
                             cs_remark=order_data.get('csRemark', '').strip(),
                             buyer_remark=order_data.get('buyerMessage', '').strip(),
                             total_amount=float(order_data.get('receivable', 0)),
-                            currency=order_data.get('currencyCode') if order_data.get('currencyCode') in dict(Order.CURRENCY_CHOICES) else None  # 设置币种，无效时为空
+                            currency=order_data.get('currencyCode') if order_data.get('currencyCode') in dict(Order.CURRENCY_CHOICES) else None
                         )
                         order.save()
                         logger.info(f"订单基本信息创建成功: {order_number}")
@@ -348,15 +392,19 @@ class WDTOrderSync:
                                 'quantity': int(item.get('num', 0))
                             })
 
-                        # 创建包裹
+                        # 获取物流服务
                         service = self._get_service_by_name(order_data.get('logisticsText'))
-                        
+                        if not service:
+                            logger.info(f"订单 {order_number} 没有物流服务信息，跳过包裹创建")
+                            continue
+
+                        # 创建包裹
                         package = Package(
                             order=order,
-                            warehouse=warehouse,  # 使用之前验证过的仓库
-                            service=service,  # 可以为None
+                            warehouse=warehouse,
+                            service=service,
                             tracking_no=order_data.get('logisticsNo', ''),
-                            pkg_status_code='0',  # 待发货
+                            pkg_status_code=self.PACKAGE_STATUS_MAP.get(order.status, '0'),
                             items=items_data
                         )
                         package.save()
@@ -365,7 +413,7 @@ class WDTOrderSync:
                         order.package_id = str(package.id)
                         order.save()
                         
-                        logger.info(f"创建包裹成功，包裹ID: {package.id}, 物流单号: {package.tracking_no}, 物流服务: {service or '未找到'}, 仓库: {warehouse}")
+                        logger.info(f"创建包裹成功，包裹ID: {package.id}, 物流单号: {package.tracking_no}, 物流服务: {service}, 仓库: {warehouse}")
 
                         result['created'] += 1
                         logger.info(f"订单 {order_number} 及其包裹创建成功")
@@ -375,15 +423,6 @@ class WDTOrderSync:
                     error_msg = f"订单 {order_data.get('tradeNo')} 同步失败: {str(e)}"
                     result['errors'].append(error_msg)
                     logger.error(error_msg)
-
-            # 处理分页
-            if current_page < math.ceil(total_orders / page_size):
-                next_page_result = self.sync_orders_by_page(current_page + 1)
-                result['total'] += next_page_result['total']
-                result['created'] += next_page_result['created']
-                result['updated'] += next_page_result['updated']
-                result['failed'] += next_page_result['failed']
-                result['errors'].extend(next_page_result['errors'])
 
             logger.info(f"订单同步完成，总计: {result['total']}, 新建: {result['created']}, 更新: {result['updated']}, 失败: {result['failed']}")
             return result
