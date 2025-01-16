@@ -1,0 +1,108 @@
+{% extends "public-base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans '商品展示' %}{% endblock %}
+
+{% block content %}
+<div class="container-xl mt-2">
+    <!-- 筛选区 -->
+    <div class="mb-3">
+        <!-- 平台筛选 -->
+        <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
+            <div class="btn-group">
+                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                   class="btn {% if not current_platform %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {% trans '全部类型' %}
+                </a>
+                {% for type_code, type_name in product_types %}
+                <a href="?platform={{ type_code }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                   class="btn {% if current_platform == type_code %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {{ type_name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 品牌筛选 -->
+        <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
+            <div class="btn-group">
+                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}" 
+                   class="btn {% if not current_brand %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {% trans '全部品牌' %}
+                </a>
+                {% for brand in brands %}
+                <a href="?brand={{ brand.id }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}" 
+                   class="btn {% if current_brand == brand.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {{ brand.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- 仓库筛选 -->
+        <div class="d-flex justify-content-start" style="overflow-x: auto;">
+            <div class="btn-group">
+                <a href="?{% if current_platform %}platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                   class="btn {% if not current_warehouse %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {% trans '全部仓库' %}
+                </a>
+                {% for warehouse in warehouses %}
+                <a href="?warehouse={{ warehouse.id }}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                   class="btn {% if current_warehouse == warehouse.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {{ warehouse.warehouse_name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Products grid -->
+    <div class="row row-cards">
+        {% for product in products %}
+        <div class="col-sm-6 col-lg-4">
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="text-center" style="height: 200px;">
+                        {% if product.img_url %}
+                        <img src="{{ product.img_url }}" 
+                             alt="{{ product.sku_name }}" 
+                             style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                        {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo text-muted" width="48" height="48" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <line x1="15" y1="8" x2="15.01" y2="8" />
+                                <rect x="4" y="4" width="16" height="16" rx="3" />
+                                <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5" />
+                                <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2" />
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="p-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="text-muted me-2">{{ product.sku_code }}</span>
+                            <span class="text-truncate">{{ product.sku_name }}</span>
+                        </div>
+                        <div class="text-muted">
+                            {% trans '库存：' %}
+                            <span class="{% if product.total_stock %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                {{ product.total_stock|default:0 }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% trans '暂无商品数据' %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

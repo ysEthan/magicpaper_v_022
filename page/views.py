@@ -6,10 +6,11 @@ from django.core.cache import cache
 from datetime import timedelta
 import json
 from gallery.models import SKU
-from storage.models import Inventory, StockIn, StockOut
+from storage.models import Inventory, StockIn, StockOut, Warehouse
 from trade.models import Order
 from procurement.models import PurchaseOrder
 from logistics.models import Package
+from gallery.models import Brand
 
 @login_required
 def index_view(request):
@@ -275,3 +276,63 @@ def get_inventory_trend(days=7):
         current_date += timedelta(days=1)
     
     return result
+
+def product_list(request):
+    """商品展示页面"""
+    # 获取筛选参数
+    warehouse_id = request.GET.get('warehouse')
+    platform = request.GET.get('platform')
+    brand_id = request.GET.get('brand')
+    
+    # 获取所有启用的仓库
+    warehouses = Warehouse.objects.filter(status=True).order_by('warehouse_code')
+    
+    # 获取所有品牌
+    brands = Brand.objects.filter(status=True).order_by('name')
+    
+    # 构建查询
+    products_query = SKU.objects.filter(status=True).select_related('spu')
+    
+    # 平台筛选
+    if platform:
+        products_query = products_query.filter(spu__product_type=platform)
+    
+    # 品牌筛选
+    if brand_id:
+        products_query = products_query.filter(spu__brand_id=brand_id)
+    
+    # 仓库筛选
+    if warehouse_id:
+        # 如果选择了特定仓库，只统计该仓库的库存
+        products = products_query.annotate(
+            total_stock=Sum('inventories__quantity', 
+                          filter=Q(inventories__warehouse_id=warehouse_id))
+        ).filter(total_stock__gt=0).order_by('sku_code')
+    else:
+        # 否则统计所有仓库的总库存
+        products = products_query.annotate(
+            total_stock=Sum('inventories__quantity')
+        ).filter(total_stock__gt=0).order_by('sku_code')
+    
+    # 处理图片URL
+    for product in products:
+        if product.img_url and not product.img_url.startswith(('http://', 'https://')):
+            product.img_url = f"/media/{product.img_url}"
+    
+    # 产品类型选项
+    PRODUCT_TYPE_CHOICES = [
+        ('math_design', '设计款'),
+        ('ready_made', '现货款'),
+        ('raw_material', '材料'),
+        ('packing_material', '包材'),
+    ]
+    
+    return render(request, 'page/product_list.html', {
+        'products': products,
+        'warehouses': warehouses,
+        'current_warehouse': warehouse_id,
+        'product_types': PRODUCT_TYPE_CHOICES,
+        'current_platform': platform,
+        'brands': brands,
+        'current_brand': brand_id,
+    })

@@ -37,4 +37,7 @@ urlpatterns = [
 
     # Report URL
     path('report/', views.report, name='report'),
+
+    # SKU Search API
+    path('api/sku/search/', views.sku_search, name='sku_search'),
 ] 

@@ -57,17 +57,22 @@
     <!-- Packages list -->
     <div class="card">
         <div class="table-responsive">
-            <table class="table table-vcenter card-table">
+            <table class="table table-vcenter card-table table-fixed">
+                <colgroup>
+                    <col style="width: 160px">
+                    <col style="width: 140px">
+                    <col style="width: 140px">
+                    <col style="width: 110px">
+                    <col style="width: 120px">
+                    <col style="width: 40px">
+                </colgroup>
                 <thead>
                     <tr>
                         <th>{% trans '包裹信息' %}</th>
-                        <th>{% trans '服务' %}</th>
-                        <th>{% trans '状态' %}</th>
-                        <th>{% trans '重量' %}</th>
-                        <th>{% trans '体积' %}</th>
-                        <th>{% trans '预估费用' %}</th>
-                        <th>{% trans '实际费用' %}</th>
-                        <th>{% trans '待发货时间' %}</th>
+                        <th>{% trans '仓配信息' %}</th>
+                        <th>{% trans '收件信息' %}</th>
+                        <th>{% trans '包裹规格及费用' %}</th>
+                        <th>{% trans '时间信息' %}</th>
                         <th class="w-1"></th>
                     </tr>
                 </thead>
@@ -77,30 +82,107 @@
                         <td>
                             <div>
                                 <div><strong>{% trans '运单号：' %}</strong>
-                                    <a href="{% url 'logistics:package_detail' package.pk %}">
-                                        {{ package.tracking_no|default:'-' }}
+                                    {% if package.tracking_no %}
+                                    <a href="https://t.17track.net/zh-cn#nums={{ package.tracking_no }}&fc={{ package.service.carrier.query_key }}" target="_blank" class="text-dark text-decoration-underline">
+                                        {{ package.tracking_no }}
                                     </a>
+                                    {% else %}
+                                    -
+                                    {% endif %}
                                 </div>
-                                <div><strong>{% trans '平台订单号：' %}</strong>{{ package.order.order_number }}</div>
-                                <div><strong>{% trans '物流商：' %}</strong>{{ package.carrier_name }}</div>
+                                <div><strong>{% trans '订单号：' %}</strong>{{ package.order.platform_order_number }}</div>
+                                <div><strong>{% trans '状态：' %}</strong>
+                                    <a href="#" data-bs-toggle="offcanvas" data-bs-target="#statusOffcanvas{{ package.pk }}" role="button" aria-controls="statusOffcanvas{{ package.pk }}" class="text-decoration-none">
+                                        <span class="{% if package.pkg_status_code == '0' %}text-warning{% endif %}
+                                            {% if package.pkg_status_code == '1' %}text-primary{% endif %}
+                                            {% if package.pkg_status_code == '2' %}text-purple{% endif %}
+                                            {% if package.pkg_status_code == '3' %}text-success{% endif %}
+                                            {% if package.pkg_status_code == '4' %}text-danger{% endif %}">
+                                            {{ package.get_pkg_status_code_display }}
+                                        </span>
+                                    </a>
+
+                                    <!-- Status Offcanvas -->
+                                    <div class="offcanvas offcanvas-end" tabindex="-1" id="statusOffcanvas{{ package.pk }}" aria-labelledby="statusOffcanvasLabel{{ package.pk }}">
+                                        <div class="offcanvas-header">
+                                            <h2 class="offcanvas-title" id="statusOffcanvasLabel{{ package.pk }}">{% trans '包裹状态详情' %}</h2>
+                                            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                                        </div>
+                                        <div class="offcanvas-body">
+                                            <div>
+                                                <div class="mb-3">
+                                                    <strong>{% trans '运单号：' %}</strong>{{ package.tracking_no|default:'-' }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>{% trans '当前状态：' %}</strong>
+                                                    <span class="{% if package.pkg_status_code == '0' %}text-warning{% endif %}
+                                                        {% if package.pkg_status_code == '1' %}text-primary{% endif %}
+                                                        {% if package.pkg_status_code == '2' %}text-purple{% endif %}
+                                                        {% if package.pkg_status_code == '3' %}text-success{% endif %}
+                                                        {% if package.pkg_status_code == '4' %}text-danger{% endif %}">
+                                                        {{ package.get_pkg_status_code_display }}
+                                                    </span>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <strong>{% trans '更新时间：' %}</strong>{{ package.pending_time|date:"Y-m-d H:i"|default:'-' }}
+                                                </div>
+
+                                                <!-- 包裹轨迹时间线 -->
+                                                <div class="hr-text mb-3">{% trans '轨迹信息' %}</div>
+                                                <div class="timeline">
+                                                    {% for track in package.tracking_records.all|dictsort:"tracking_time" %}
+                                                    <div class="timeline-event">
+                                                        <div class="timeline-event-icon">
+                                                            <!-- Download SVG icon from http://tabler-icons.io/i/circle-dot -->
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                                                <circle cx="12" cy="12" r="1" />
+                                                                <circle cx="12" cy="12" r="9" />
+                                                            </svg>
+                                                        </div>
+                                                        <div class="timeline-event-card">
+                                                            <div>{{ track.description }}</div>
+                                                            <div class="text-muted">
+                                                                {% if track.location %}{{ track.location }}{% endif %}
+                                                                <span class="text-secondary float-end">{{ track.tracking_time|date:"Y-m-d H:i" }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% empty %}
+                                                    <div class="text-muted text-center">{% trans '暂无轨迹信息' %}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button class="btn btn-primary" type="button" data-bs-dismiss="offcanvas">
+                                                    {% trans '关闭' %}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </td>
-                        <td>{{ package.service_name }}</td>
                         <td>
-                            <span class="badge 
-                                {% if package.pkg_status_code == '0' %}bg-yellow{% endif %}
-                                {% if package.pkg_status_code == '1' %}bg-blue{% endif %}
-                                {% if package.pkg_status_code == '2' %}bg-purple{% endif %}
-                                {% if package.pkg_status_code == '3' %}bg-green{% endif %}
-                                {% if package.pkg_status_code == '4' %}bg-red{% endif %}">
-                                {{ package.get_pkg_status_code_display }}
-                            </span>
+                            <div><strong>{% trans '仓库：' %}</strong>{{ package.warehouse.warehouse_name|default:'-' }}</div>
+                            <div><strong>{% trans '物流商：' %}</strong>{{ package.carrier_name }}</div>
+                            <div><strong>{% trans '服务：' %}</strong>{{ package.service_name }}</div>
                         </td>
-                        <td>{{ package.weight|default:'-' }} kg</td>
-                        <td>{{ package.volume|default:'-' }}</td>
-                        <td>{{ package.estimated_logistics_cost }}</td>
-                        <td>{{ package.carrier_cost|default:'-' }}</td>
-                        <td>{{ package.pending_time|date:"Y-m-d H:i"|default:'-' }}</td>
+                        <td>
+                            <div><strong>{% trans '收件人：' %}</strong>{{ package.order.receiver_name }}</div>
+                            <div><strong>{% trans '电话：' %}</strong>{{ package.order.receiver_phone }}</div>
+                            <div><strong>{% trans '地址：' %}</strong>{{ package.order.receiver_address }}</div>
+                        </td>
+                        <td>
+                            <div><strong>{% trans '重量：' %}</strong>{{ package.weight|default:'-' }} </div>
+                            <div><strong>{% trans '体积：' %}</strong>{{ package.volume|default:'-' }}</div>
+                            <div><strong>{% trans '运费：' %}</strong>{{ package.carrier_cost|default:'-' }}</div>
+                        </td>
+                        <td>
+                            <div><strong>{% trans '待发货：' %}</strong>{{ package.pending_time|date:"Y-m-d H:i"|default:'-' }}</div>
+                            <div><strong>{% trans '揽收：' %}</strong>{{ package.pickup_time|date:"Y-m-d H:i"|default:'-' }}</div>
+                            <div><strong>{% trans '签收：' %}</strong>{{ package.delivery_time|date:"Y-m-d H:i"|default:'-' }}</div>
+                        </td>
                         <td>
                             <div class="btn-list flex-nowrap">
                                 <a href="{% url 'logistics:package_detail' package.pk %}" class="btn btn-white btn-sm">
@@ -111,7 +193,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center">{% trans '暂无数据' %}</td>
+                        <td colspan="6" class="text-center">{% trans '暂无数据' %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

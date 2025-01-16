@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.core.cache import cache
 from datetime import timedelta
 import json
+from django.http import JsonResponse
 
 # Brand views
 @login_required
@@ -384,3 +385,34 @@ def report(request):
         cache.set(cache_key, report_data, 300)
     
     return render(request, 'gallery/report.html', report_data)
+
+@login_required
+def sku_search(request):
+    """SKU搜索API"""
+    query = request.GET.get('q', '')
+    page = int(request.GET.get('page', 1))
+    page_size = 10
+
+    if len(query) < 2:
+        return JsonResponse({
+            'results': [],
+            'pagination': {'more': False}
+        })
+
+    skus = SKU.objects.filter(
+        Q(sku_code__icontains=query) |
+        Q(sku_name__icontains=query)
+    ).values('id', 'sku_code', 'sku_name')
+
+    start = (page - 1) * page_size
+    end = start + page_size
+    total = skus.count()
+
+    results = list(skus[start:end])
+    
+    return JsonResponse({
+        'results': results,
+        'pagination': {
+            'more': total > page * page_size
+        }
+    })

@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<!-- TomSelect CSS -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+.ts-wrapper {
+    height: 36px;
+}
+.ts-control {
+    border: 1px solid rgba(98, 105, 118, 0.16) !important;
+    padding: 4px 12px !important;
+    min-height: 36px !important;
+}
+.ts-dropdown {
+    border: 1px solid rgba(98, 105, 118, 0.16) !important;
+}
+.ts-dropdown .active {
+    background-color: #206bc4 !important;
+    color: white !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl mt-2">
+    <div class="row row-cards">
+        <div class="col-12 ps-1">
+            <form method="post" class="card">
+                {% csrf_token %}
+                <div class="card-body">
+                    <!-- 基本信息区域 -->
+                    <div class="row mb-4">
+                        <div class="col-md-12 col-xl-12">
+                            <div class="mb-3">
+                                <h3 class="card-title">基本信息</h3>
+                            </div>
+                            <div class="row g-2">
+                                <!-- 需求名称 -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.title }}
+                                        {% if form.title.errors %}
+                                            <div class="invalid-feedback">{{ form.title.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="row g-2">
+                                <!-- 需求类型 -->
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.request_type }}
+                                        {% if form.request_type.errors %}
+                                            <div class="invalid-feedback">{{ form.request_type.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- 需求优先级 -->
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.priority }}
+                                        {% if form.priority.errors %}
+                                            <div class="invalid-feedback">{{ form.priority.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <div class="row g-2">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        {{ form.description }}
+                                        {% if form.description.errors %}
+                                            <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SKU信息区域 -->
+                    <div class="row mb-4">
+                        <div class="col-md-12 col-xl-12">
+                            <div class="mb-3">
+                                <h3 class="card-title">SKU信息</h3>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <select class="form-select" id="id_sku" name="sku">
+                                            <option value=""></option>
+                                            {% for choice in form.sku.field.queryset %}
+                                                <option value="{{ choice.id }}" 
+                                                    data-name="{{ choice.sku_name }}" 
+                                                    data-search="{{ choice.sku_code|lower }}"
+                                                    data-image="/media/{{ choice.img_url|default:'' }}">{{ choice.sku_code }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.sku.errors %}
+                                            <div class="invalid-feedback">{{ form.sku.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="card" style="width: 60%; height: 120px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa;">
+                                            <img id="sku_image" src="" alt="SKU图片" class="card-img-top" style="max-height: 100px; max-width: 90%; object-fit: contain;">
+                                            <div id="sku_image_placeholder" class="text-muted" style="text-align: center;">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                    <path d="M15 8h.01"></path>
+                                                    <path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"></path>
+                                                    <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"></path>
+                                                    <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"></path>
+                                                </svg>
+                                                <p class="mt-2">暂无图片</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <input type="text" class="form-control" id="sku_name" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他信息区域 -->
+                    <div class="row">
+                        <div class="col-md-12 col-xl-12">
+                            <div class="mb-3">
+                                <h3 class="card-title">其他信息</h3>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.expected_completion_date }}
+                                        {% if form.expected_completion_date.errors %}
+                                            <div class="invalid-feedback">{{ form.expected_completion_date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        {{ form.remark }}
+                                        {% if form.remark.errors %}
+                                            <div class="invalid-feedback">{{ form.remark.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- TomSelect JS -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const skuSelect = document.querySelector('#id_sku');
+    const skuNameInput = document.querySelector('#sku_name');
+    const skuImage = document.querySelector('#sku_image');
+    const skuImagePlaceholder = document.querySelector('#sku_image_placeholder');
+    
+    // 初始化 TomSelect
+    new TomSelect(skuSelect, {
+        create: false,
+        sortField: {
+            field: "text",
+            direction: "asc"
+        },
+        placeholder: '选择或搜索SKU',
+        allowEmptyOption: true,
+        items: [], // 设置初始选中项为空
+        onChange: function(value) {
+            const selectedOption = skuSelect.querySelector(`option[value="${value}"]`);
+            skuNameInput.value = selectedOption ? selectedOption.dataset.name : '';
+            
+            // 处理图片显示
+            if (selectedOption && selectedOption.dataset.image) {
+                skuImage.src = selectedOption.dataset.image;
+                skuImage.style.display = 'block';
+                skuImagePlaceholder.style.display = 'none';
+            } else {
+                skuImage.src = '';
+                skuImage.style.display = 'none';
+                skuImagePlaceholder.style.display = 'flex';
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 

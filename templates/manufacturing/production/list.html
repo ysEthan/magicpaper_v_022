@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}生产工单列表{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">生产工单列表</h2>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{% url 'manufacturing:production_create' %}" class="btn btn-primary d-none d-sm-inline-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        创建工单
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">搜索</label>
+                    <input type="text" class="form-control" name="search" value="{{ search_term }}" placeholder="工单编号/SKU编码/需求编号">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" name="status">
+                        <option value="">全部</option>
+                        {% for status_code, status_name in status_choices %}
+                        <option value="{{ status_code }}" {% if status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <circle cx="10" cy="10" r="7" />
+                            <line x1="21" y1="21" x2="15" y2="15" />
+                        </svg>
+                        搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 工单列表 -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>工单编号</th>
+                        <th>关联需求</th>
+                        <th>产品</th>
+                        <th>计划数量</th>
+                        <th>已完成数量</th>
+                        <th>不良品数量</th>
+                        <th>完成率</th>
+                        <th>状态</th>
+                        <th>计划日期</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.order_number }}</td>
+                        <td>
+                            {% if order.demand %}
+                            <a href="{% url 'manufacturing:demand_detail' pk=order.demand.pk %}">{{ order.demand.request_number }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ order.sku.sku_name }}</td>
+                        <td>{{ order.quantity }}</td>
+                        <td>{{ order.completed_quantity }}</td>
+                        <td>{{ order.defective_quantity }}</td>
+                        <td>{{ order.completion_rate }}%</td>
+                        <td>
+                            {% if order.status == 'pending' %}
+                            <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'in_progress' %}
+                            <span class="badge bg-primary">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'quality_check' %}
+                            <span class="badge bg-yellow">{{ order.get_status_display }}</span>
+                            {% elif order.status == 'completed' %}
+                            <span class="badge bg-success">{{ order.get_status_display }}</span>
+                            {% else %}
+                            <span class="badge bg-danger">{{ order.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.production_start_date }} ~ {{ order.production_end_date }}</td>
+                        <td>
+                            <a href="{% url 'manufacturing:production_detail' pk=order.pk %}" class="btn btn-primary btn-icon" title="查看详情">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <circle cx="12" cy="12" r="2" />
+                                    <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
+                                </svg>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center">暂无生产工单</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if orders.has_other_pages %}
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-muted">
+                第 <span>{{ orders.number }}</span> / <span>{{ orders.paginator.num_pages }}</span> 页
+            </p>
+            <ul class="pagination m-0 ms-auto">
+                {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="15 6 9 12 15 18" />
+                        </svg>
+                        上一页
+                    </a>
+                </li>
+                {% endif %}
+                {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.next_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}{% if status %}&status={{ status }}{% endif %}">
+                        下一页
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="9 6 15 12 9 18" />
+                        </svg>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

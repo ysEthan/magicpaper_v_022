@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'trade',
     'logistics',
     'procurement',
+    'manufacturing',
     # 'storage.apps.StorageConfig',
 ]
 

@@ -18,7 +18,12 @@
     padding: 10px;
 }
 
-/* 其他样式保持不变... */
+.sku-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    cursor: zoom-in;
+}
 </style>
 {% endblock %}
 
@@ -79,6 +84,7 @@
             <table class="table table-vcenter card-table table-sm">
                 <thead>
                     <tr>
+                        <th>图片</th>
                         <th>SKU编码</th>
                         <th>SKU名称</th>
                         <th>所属SPU</th>
@@ -92,6 +98,13 @@
                 <tbody>
                     {% for sku in skus %}
                     <tr>
+                        <td>
+                            {% if sku.img_url %}
+                            <img src="/media/{{ sku.img_url }}" alt="{{ sku.sku_name }}" class="sku-thumbnail" data-zoom-src="/media/{{ sku.img_url }}">
+                            {% else %}
+                            <span class="text-muted">无图片</span>
+                            {% endif %}
+                        </td>
                         <td>{{ sku.sku_code }}</td>
                         <td>{{ sku.sku_name }}</td>
                         <td>{{ sku.spu.spu_name }}</td>
@@ -147,5 +160,48 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- JavaScript 代码保持不变... -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const zoomContainer = document.querySelector('.hover-zoom-container');
+    const thumbnails = document.querySelectorAll('.sku-thumbnail');
+
+    thumbnails.forEach(thumbnail => {
+        thumbnail.addEventListener('mouseover', function(e) {
+            const zoomSrc = this.getAttribute('data-zoom-src');
+            if (zoomSrc) {
+                zoomContainer.style.backgroundImage = `url(${zoomSrc})`;
+                zoomContainer.style.display = 'block';
+            }
+        });
+
+        thumbnail.addEventListener('mousemove', function(e) {
+            const x = e.clientX + 20;
+            const y = e.clientY + 20;
+            
+            // Ensure the zoom container stays within viewport
+            const container = zoomContainer.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            let left = x;
+            let top = y;
+            
+            if (x + container.width > viewportWidth) {
+                left = x - container.width - 40;
+            }
+            
+            if (y + container.height > viewportHeight) {
+                top = y - container.height - 40;
+            }
+            
+            zoomContainer.style.left = left + 'px';
+            zoomContainer.style.top = top + 'px';
+        });
+
+        thumbnail.addEventListener('mouseout', function() {
+            zoomContainer.style.display = 'none';
+        });
+    });
+});
+</script>
 {% endblock %} 

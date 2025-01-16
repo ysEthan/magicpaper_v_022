@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">{{ title }}</h2>
+                {% if demand %}
+                <div class="text-muted mt-1">关联需求：{{ demand.request_number }} - {{ demand.title }}</div>
+                {% endif %}
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{% url 'manufacturing:production_list' %}" class="btn btn-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <line x1="5" y1="12" x2="11" y2="18" />
+                            <line x1="5" y1="12" x2="11" y2="6" />
+                        </svg>
+                        返回列表
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards">
+        <div class="col-12">
+            <form method="post" class="card">
+                {% csrf_token %}
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">产品SKU</label>
+                            {{ form.sku }}
+                            {% if form.sku.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.sku.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">计划生产数量</label>
+                            {{ form.quantity }}
+                            {% if form.quantity.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.quantity.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">计划开始日期</label>
+                            {{ form.production_start_date }}
+                            {% if form.production_start_date.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.production_start_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">计划结束日期</label>
+                            {{ form.production_end_date }}
+                            {% if form.production_end_date.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.production_end_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label required">物料清单</label>
+                            {{ form.materials }}
+                            <small class="form-hint">请输入JSON格式的物料清单，包含物料SKU、需求数量等信息</small>
+                            {% if form.materials.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.materials.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">质量要求</label>
+                            {{ form.quality_requirements }}
+                            {% if form.quality_requirements.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.quality_requirements.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">生产说明</label>
+                            {{ form.production_instructions }}
+                            {% if form.production_instructions.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.production_instructions.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">备注</label>
+                            {{ form.remark }}
+                            {% if form.remark.errors %}
+                            <div class="invalid-feedback" style="display: block;">{{ form.remark.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

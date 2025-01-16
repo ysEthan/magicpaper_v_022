@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}生产报表{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">生产报表</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- 筛选表单 -->
+    <div class="row row-cards mb-4">
+        <div class="col-12">
+            <form method="get" class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">开始日期</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">结束日期</label>
+                            <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">产品SKU</label>
+                            <select name="sku" class="form-select">
+                                <option value="">全部</option>
+                                {% for sku in skus %}
+                                <option value="{{ sku.id }}" {% if request.GET.sku == sku.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ sku.sku_name }} ({{ sku.sku_code }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">状态</label>
+                            <select name="status" class="form-select">
+                                <option value="">全部</option>
+                                {% for status in status_choices %}
+                                <option value="{{ status.0 }}" {% if request.GET.status == status.0 %}selected{% endif %}>
+                                    {{ status.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">筛选</button>
+                            <a href="{% url 'manufacturing:report' %}" class="btn btn-link">重置</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row row-cards mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">总工单数</div>
+                    </div>
+                    <div class="h1 mb-3">{{ stats.total_orders }}</div>
+                    <div class="d-flex mb-2">
+                        <div>完成率</div>
+                        <div class="ms-auto">
+                            <span class="text-green d-inline-flex align-items-center lh-1">
+                                {{ stats.completion_rate }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">计划生产总量</div>
+                    </div>
+                    <div class="h1 mb-3">{{ stats.total_planned_quantity }}</div>
+                    <div class="d-flex mb-2">
+                        <div>已完成</div>
+                        <div class="ms-auto">{{ stats.total_completed_quantity }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">不良品总量</div>
+                    </div>
+                    <div class="h1 mb-3">{{ stats.total_defective_quantity }}</div>
+                    <div class="d-flex mb-2">
+                        <div>不良品率</div>
+                        <div class="ms-auto">
+                            <span class="text-yellow d-inline-flex align-items-center lh-1">
+                                {{ stats.defect_rate }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">平均生产周期</div>
+                    </div>
+                    <div class="h1 mb-3">{{ stats.avg_production_days }} 天</div>
+                    <div class="d-flex mb-2">
+                        <div>最长周期</div>
+                        <div class="ms-auto">{{ stats.max_production_days }} 天</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表 -->
+    <div class="row row-cards mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="production-trend" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 工单列表 -->
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">工单列表</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table card-table table-vcenter text-nowrap datatable">
+                        <thead>
+                            <tr>
+                                <th>工单编号</th>
+                                <th>产品SKU</th>
+                                <th>计划数量</th>
+                                <th>已完成</th>
+                                <th>不良品</th>
+                                <th>完成率</th>
+                                <th>状态</th>
+                                <th>计划日期</th>
+                                <th>实际日期</th>
+                                <th>生产周期</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'manufacturing:production_detail' pk=order.pk %}">{{ order.order_number }}</a>
+                                </td>
+                                <td>{{ order.sku.sku_name }}</td>
+                                <td>{{ order.quantity }}</td>
+                                <td>{{ order.completed_quantity }}</td>
+                                <td>{{ order.defective_quantity }}</td>
+                                <td>{{ order.completion_rate }}%</td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                    <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'in_progress' %}
+                                    <span class="badge bg-primary">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'quality_check' %}
+                                    <span class="badge bg-yellow">{{ order.get_status_display }}</span>
+                                    {% elif order.status == 'completed' %}
+                                    <span class="badge bg-success">{{ order.get_status_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">{{ order.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.production_start_date }} ~ {{ order.production_end_date }}</td>
+                                <td>{{ order.actual_start_date|default:"-" }} ~ {{ order.actual_end_date|default:"-" }}</td>
+                                <td>{{ order.production_days }} 天</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if orders.has_other_pages %}
+                <div class="card-footer d-flex align-items-center">
+                    <p class="m-0 text-muted">
+                        第 <span>{{ orders.number }}</span> / <span>{{ orders.paginator.num_pages }}</span> 页
+                    </p>
+                    <ul class="pagination m-0 ms-auto">
+                        {% if orders.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.sku %}&sku={{ request.GET.sku }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <polyline points="15 6 9 12 15 18" />
+                                </svg>
+                                上一页
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if orders.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}{% if request.GET.sku %}&sku={{ request.GET.sku }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                下一页
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <polyline points="9 6 15 12 9 18" />
+                                </svg>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse the Django template variables into JavaScript variables
+        const dates = JSON.parse('{{ dates|escapejs }}');
+        const plannedQuantities = JSON.parse('{{ planned_quantities|escapejs }}');
+        const completedQuantities = JSON.parse('{{ completed_quantities|escapejs }}');
+        const defectiveQuantities = JSON.parse('{{ defective_quantities|escapejs }}');
+
+        var chart = echarts.init(document.getElementById('production-trend'));
+        var option = {
+            title: {
+                text: '生产趋势'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['计划数量', '完成数量', '不良品数量']
+            },
+            xAxis: {
+                type: 'category',
+                data: dates
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [
+                {
+                    name: '计划数量',
+                    type: 'line',
+                    data: plannedQuantities
+                },
+                {
+                    name: '完成数量',
+                    type: 'line',
+                    data: completedQuantities
+                },
+                {
+                    name: '不良品数量',
+                    type: 'line',
+                    data: defectiveQuantities
+                }
+            ]
+        };
+        chart.setOption(option);
+
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    });
+</script>
+{% endblock %} 

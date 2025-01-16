@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}删除工单 - {{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">删除工单</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards">
+        <div class="col-12">
+            <form method="post" class="card">
+                {% csrf_token %}
+                <div class="card-body">
+                    <h3>确定要删除以下工单吗？</h3>
+                    <div class="mt-3">
+                        <p><strong>工单编号：</strong>{{ order.order_number }}</p>
+                        <p><strong>产品SKU：</strong>{{ order.sku.sku_name }} ({{ order.sku.sku_code }})</p>
+                        <p><strong>计划生产数量：</strong>{{ order.quantity }}</p>
+                        <p><strong>计划日期：</strong>{{ order.production_start_date }} ~ {{ order.production_end_date }}</p>
+                        {% if order.demand %}
+                        <p><strong>关联需求：</strong>{{ order.demand.request_number }} - {{ order.demand.title }}</p>
+                        {% endif %}
+                        <p class="text-danger">此操作不可恢复！</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex">
+                        <a href="{% url 'manufacturing:production_detail' pk=order.pk %}" class="btn btn-link">取消</a>
+                        <button type="submit" class="btn btn-danger ms-auto">确认删除</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

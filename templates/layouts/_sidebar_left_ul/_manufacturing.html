@@ -1,0 +1,57 @@
+<li class="nav-item dropdown {% if active_menu %}{% if active_menu == 'manufacturing' %}active show{% endif %}{% endif %}">
+    <a class="nav-link dropdown-toggle {% if active_menu %}{% if active_menu == 'manufacturing' %}show{% endif %}{% endif %}" 
+       href="#navbar-manufacturing" 
+       data-bs-toggle="dropdown" 
+       data-bs-auto-close="false" 
+       role="button" 
+       aria-expanded="{% if active_menu %}{% if active_menu == 'manufacturing' %}true{% else %}false{% endif %}{% else %}false{% endif %}">
+        <span class="nav-link-icon d-md-none d-lg-inline-block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-assembly" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M19.875 6.27a2.225 2.225 0 0 1 1.125 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l6.75 -3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
+                <path d="M15.5 9.422c.312 .18 .503 .515 .5 .876v3.277c0 .364 -.197 .7 -.515 .877l-3 1.922a0.997 .997 0 0 1 -.97 0l-3 -1.922a1.003 1.003 0 0 1 -.515 -.876v-3.278c0 -.364 .197 -.7 .514 -.877l3 -1.79c.311 -.174 .69 -.174 1 0l3 1.79h-.014z" />
+            </svg>
+        </span>
+        <span class="nav-link-title">生产管理</span>
+    </a>
+    <div class="dropdown-menu {% if active_menu %}{% if active_menu == 'manufacturing' %}show{% endif %}{% endif %}" data-bs-popper="none">
+        <a class="dropdown-item {% if active_submenu %}{% if active_submenu == 'demand' %}active{% endif %}{% endif %}" 
+           href="{% url 'manufacturing:demand_list' %}">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clipboard-list" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                    <rect x="9" y="3" width="6" height="4" rx="2" />
+                    <line x1="9" y1="12" x2="9.01" y2="12" />
+                    <line x1="13" y1="12" x2="15" y2="12" />
+                    <line x1="9" y1="16" x2="9.01" y2="16" />
+                    <line x1="13" y1="16" x2="15" y2="16" />
+                </svg>
+            </span>
+            <span class="nav-link-title">需求管理</span>
+        </a>
+        <a class="dropdown-item {% if active_submenu %}{% if active_submenu == 'production' %}active{% endif %}{% endif %}" 
+           href="{% url 'manufacturing:production_list' %}">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-assembly-off" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <path d="M8.703 4.685l2.326 -1.385a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033a2.225 2.225 0 0 1 1.124 1.948v7.284c0 .809 -.443 1.555 -1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1 -2.184 0l-6.75 -4.27a2.225 2.225 0 0 1 -1.158 -1.948v-7.285c0 -.809 .443 -1.554 1.158 -1.947l1.516 -.896" />
+                    <path d="M11.593 7.591c.295 -.133 .637 -.12 .921 .04l3 1.79h-.014c.312 .18 .503 .515 .5 .876v3.277c0 .364 -.197 .7 -.515 .877l-3 1.922a0.997 .997 0 0 1 -.97 0l-3 -1.922a1.003 1.003 0 0 1 -.515 -.876v-3.278c0 -.364 .197 -.7 .514 -.877l1.158 -.687" />
+                    <path d="M3 3l18 18" />
+                </svg>
+            </span>
+            <span class="nav-link-title">生产工单</span>
+        </a>
+        <a class="dropdown-item {% if active_submenu %}{% if active_submenu == 'report' %}active{% endif %}{% endif %}" 
+           href="{% url 'manufacturing:report' %}">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-line" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                    <line x1="4" y1="19" x2="20" y2="19" />
+                    <polyline points="4 15 8 9 12 11 16 6 20 10" />
+                </svg>
+            </span>
+            <span class="nav-link-title">生产报表</span>
+        </a>
+    </div>
+</li>

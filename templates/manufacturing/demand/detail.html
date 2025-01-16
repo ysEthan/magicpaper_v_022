@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}需求详情 - {{ demand.request_number }}{% endblock %}
+
+{% block content %}
+<div class="container-xl mt-1">
+    <div class="row row-cards g-2">
+        <!-- 需求基本信息 -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h3 class="card-title">基本信息</h3>
+                </div>
+                <div class="card-body py-2">
+                    <div class="row g-2">
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">需求编号</label>
+                            <div class="form-control-plaintext py-0">{{ demand.request_number }}</div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">需求类型</label>
+                            <div class="form-control-plaintext py-0">{{ demand.get_request_type_display }}</div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">优先级</label>
+                            <div class="form-control-plaintext py-0">
+                                {% if demand.priority == 'high' %}
+                                <span class="badge bg-red">{{ demand.get_priority_display }}</span>
+                                {% elif demand.priority == 'medium' %}
+                                <span class="badge bg-yellow">{{ demand.get_priority_display }}</span>
+                                {% else %}
+                                <span class="badge bg-azure">{{ demand.get_priority_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">状态</label>
+                            <div class="form-control-plaintext py-0">
+                                {% if demand.status == 'draft' %}
+                                <span class="badge bg-secondary">{{ demand.get_status_display }}</span>
+                                {% elif demand.status == 'submitted' %}
+                                <span class="badge bg-primary">{{ demand.get_status_display }}</span>
+                                {% elif demand.status == 'processing' %}
+                                <span class="badge bg-yellow">{{ demand.get_status_display }}</span>
+                                {% elif demand.status == 'completed' %}
+                                <span class="badge bg-green">{{ demand.get_status_display }}</span>
+                                {% elif demand.status == 'cancelled' %}
+                                <span class="badge bg-red">{{ demand.get_status_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label class="form-label mb-1">需求标题</label>
+                            <div class="form-control-plaintext py-0">{{ demand.title }}</div>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label class="form-label mb-1">需求描述</label>
+                            <div class="form-control-plaintext py-0">{{ demand.description|linebreaks }}</div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">提出人</label>
+                            <div class="form-control-plaintext py-0">{{ demand.creator.username }}</div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">跟单员</label>
+                            <div class="form-control-plaintext py-0">{{ demand.handler.username|default:"-" }}</div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">预期完成日期</label>
+                            <div class="form-control-plaintext py-0">{{ demand.expected_completion_date|date:"Y-m-d" }}</div>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label mb-1">实际完成日期</label>
+                            <div class="form-control-plaintext py-0">{{ demand.actual_completion_date|date:"Y-m-d"|default:"-" }}</div>
+                        </div>
+                        {% if demand.remark %}
+                        <div class="col-12 mb-2">
+                            <label class="form-label mb-1">备注</label>
+                            <div class="form-control-plaintext py-0">{{ demand.remark|linebreaks }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const trackingTypeSelect = document.querySelector('select[name="tracking_type"]');
+        const statusSelect = document.getElementById('status-select');
+        
+        function toggleStatusSelect() {
+            if (trackingTypeSelect.value === 'status_change') {
+                statusSelect.style.display = 'block';
+            } else {
+                statusSelect.style.display = 'none';
+            }
+        }
+        
+        trackingTypeSelect.addEventListener('change', toggleStatusSelect);
+        toggleStatusSelect();
+    });
+</script>
+{% endblock %} 

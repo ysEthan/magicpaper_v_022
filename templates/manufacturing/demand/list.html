@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}需求申请列表{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- Page title -->
+    <div class="page-header d-print-none">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="page-title">需求申请列表</h2>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{% url 'manufacturing:demand_create' %}" class="btn btn-primary d-none d-sm-inline-block">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        创建需求
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索和筛选 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label">搜索</label>
+                    <input type="text" class="form-control" name="search" value="{{ search_term }}" placeholder="需求编号/标题/描述">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">需求类型</label>
+                    <select class="form-select" name="type">
+                        <option value="">全部</option>
+                        {% for type_code, type_name in type_choices %}
+                        <option value="{{ type_code }}" {% if request_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">状态</label>
+                    <select class="form-select" name="status">
+                        <option value="">全部</option>
+                        {% for status_code, status_name in status_choices %}
+                        <option value="{{ status_code }}" {% if status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <circle cx="10" cy="10" r="7" />
+                            <line x1="21" y1="21" x2="15" y2="15" />
+                        </svg>
+                        搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 需求列表 -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>需求编号</th>
+                        <th>需求类型</th>
+                        <th>标题</th>
+                        <th>提出人</th>
+                        <th>跟单员</th>
+                        <th>优先级</th>
+                        <th>状态</th>
+                        <th>预期完成日期</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for demand in demands %}
+                    <tr>
+                        <td>{{ demand.request_number }}</td>
+                        <td>{{ demand.get_request_type_display }}</td>
+                        <td>{{ demand.title }}</td>
+                        <td>{{ demand.requester.username }}</td>
+                        <td>{{ demand.handler.username|default:"-" }}</td>
+                        <td>
+                            {% if demand.priority == 'high' %}
+                            <span class="badge bg-red">{{ demand.get_priority_display }}</span>
+                            {% elif demand.priority == 'medium' %}
+                            <span class="badge bg-yellow">{{ demand.get_priority_display }}</span>
+                            {% else %}
+                            <span class="badge bg-azure">{{ demand.get_priority_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if demand.status == 'draft' %}
+                            <span class="badge bg-secondary">{{ demand.get_status_display }}</span>
+                            {% elif demand.status == 'submitted' %}
+                            <span class="badge bg-primary">{{ demand.get_status_display }}</span>
+                            {% elif demand.status == 'processing' %}
+                            <span class="badge bg-yellow">{{ demand.get_status_display }}</span>
+                            {% elif demand.status == 'completed' %}
+                            <span class="badge bg-success">{{ demand.get_status_display }}</span>
+                            {% else %}
+                            <span class="badge bg-danger">{{ demand.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ demand.expected_completion_date }}</td>
+                        <td>
+                            <a href="{% url 'manufacturing:demand_detail' pk=demand.pk %}" class="btn btn-primary btn-icon" title="查看详情">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <circle cx="12" cy="12" r="2" />
+                                    <path d="M22 12c-2.667 4.667 -6 7 -10 7s-7.333 -2.333 -10 -7c2.667 -4.667 6 -7 10 -7s7.333 2.333 10 7" />
+                                </svg>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center">暂无需求申请</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if demands.has_other_pages %}
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-muted">
+                第 <span>{{ demands.number }}</span> / <span>{{ demands.paginator.num_pages }}</span> 页
+            </p>
+            <ul class="pagination m-0 ms-auto">
+                {% if demands.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ demands.previous_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request_type %}&type={{ request_type }}{% endif %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="15 6 9 12 15 18" />
+                        </svg>
+                        上一页
+                    </a>
+                </li>
+                {% endif %}
+                {% if demands.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ demands.next_page_number }}{% if search_term %}&search={{ search_term }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if request_type %}&type={{ request_type }}{% endif %}">
+                        下一页
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <polyline points="9 6 15 12 9 18" />
+                        </svg>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

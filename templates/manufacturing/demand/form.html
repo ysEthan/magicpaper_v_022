@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-xl mt-2">
+    <div class="row row-cards">
+        <div class="col-12 ps-1">
+            <form method="post" class="card">
+                {% csrf_token %}
+                <div class="card-body">
+                    <!-- 基本信息区域 -->
+                    <div class="row mb-4">
+                        <div class="col-md-12 col-xl-12">
+                            <div class="mb-3">
+                                <h3 class="card-title">基本信息</h3>
+                            </div>
+                            <div class="row g-2">
+                                <!-- 需求名称 -->
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.title }}
+                                        {% if form.title.errors %}
+                                            <div class="invalid-feedback">{{ form.title.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2">
+                                <!-- 需求类型 -->
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.request_type }}
+                                        {% if form.request_type.errors %}
+                                            <div class="invalid-feedback">{{ form.request_type.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- 需求优先级 -->
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.priority }}
+                                        {% if form.priority.errors %}
+                                            <div class="invalid-feedback">{{ form.priority.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        {{ form.description }}
+                                        {% if form.description.errors %}
+                                            <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他信息区域 -->
+                    <div class="row">
+                        <div class="col-md-12 col-xl-12">
+                            <div class="mb-3">
+                                <h3 class="card-title">其他信息</h3>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form.expected_completion_date }}
+                                        {% if form.expected_completion_date.errors %}
+                                            <div class="invalid-feedback">{{ form.expected_completion_date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        {{ form.remark }}
+                                        {% if form.remark.errors %}
+                                            <div class="invalid-feedback">{{ form.remark.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

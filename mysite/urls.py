@@ -28,6 +28,7 @@ urlpatterns = [
     path('storage/', include('storage.urls')),
     path('trade/', include('trade.urls', namespace='trade')),
     path('logistics/', include('logistics.urls', namespace='logistics')),
+    path('manufacturing/', include('manufacturing.urls', namespace='manufacturing')),
 ]
 
 if settings.DEBUG:

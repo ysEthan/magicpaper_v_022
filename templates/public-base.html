@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>{% block title %}{% endblock %}</title>
+    {% load static %}
+    <!-- CSS files -->
+    <link href="{% static 'css/tabler.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/tabler-flags.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/tabler-payments.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'css/tabler-vendors.min.css' %}" rel="stylesheet"/>
+    {% block extra_css %}{% endblock %}
+    <style>
+        .form-label.required:after {
+            content: " *";
+            color: red;
+        }
+        .invalid-feedback.d-block {
+            display: block !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+{#        {% include "layouts/_sidebar_left.html" %}#}
+        <div class="page-wrapper">
+            {% include "layouts/_header.html" %}
+            {% block content %}{% endblock %}
+            {% include "layouts/_footer.html" %}
+        </div>
+    </div>
+    <!-- Libs JS -->
+    <script src="{% static 'libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- Tabler Core -->
+    <script src="{% static 'js/tabler.min.js' %}"></script>
+    <script>
+        // 处理侧边栏菜单的展开/收起
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdowns = document.querySelectorAll('.nav-item.dropdown');
+            dropdowns.forEach(dropdown => {
+                const toggle = dropdown.querySelector('.dropdown-toggle');
+                const menu = dropdown.querySelector('.dropdown-menu');
+                
+                if (toggle && menu) {
+                    toggle.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                        
+                        // 关闭其他展开的菜单
+                        dropdowns.forEach(otherDropdown => {
+                            if (otherDropdown !== dropdown) {
+                                const otherToggle = otherDropdown.querySelector('.dropdown-toggle');
+                                const otherMenu = otherDropdown.querySelector('.dropdown-menu');
+                                if (otherToggle && otherMenu) {
+                                    otherToggle.classList.remove('show');
+                                    otherToggle.setAttribute('aria-expanded', 'false');
+                                    otherMenu.classList.remove('show');
+                                }
+                            }
+                        });
+                        
+                        // 切换当前菜单状态
+                        toggle.classList.toggle('show');
+                        toggle.setAttribute('aria-expanded', !isExpanded);
+                        menu.classList.toggle('show');
+                    });
+                }
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
