@@ -4,6 +4,7 @@ from django.db.models import Count, Sum, F, Q
 from django.utils import timezone
 from django.core.cache import cache
 from datetime import timedelta
+from decimal import Decimal
 import json
 from gallery.models import SKU
 from storage.models import Inventory, StockIn, StockOut, Warehouse
@@ -303,16 +304,28 @@ def product_list(request):
     
     # 仓库筛选
     if warehouse_id:
-        # 如果选择了特定仓库，只统计该仓库的库存
+        # 如果选择了特定仓库，只统计该仓库的库存和成本
         products = products_query.annotate(
             total_stock=Sum('inventories__quantity', 
+                          filter=Q(inventories__warehouse_id=warehouse_id)),
+            total_cost=Sum(F('inventories__quantity') * F('inventories__stock_in__unit_cost'),
                           filter=Q(inventories__warehouse_id=warehouse_id))
         ).filter(total_stock__gt=0).order_by('sku_code')
     else:
-        # 否则统计所有仓库的总库存
+        # 否则统计所有仓库的总库存和成本
         products = products_query.annotate(
-            total_stock=Sum('inventories__quantity')
+            total_stock=Sum('inventories__quantity'),
+            total_cost=Sum(F('inventories__quantity') * F('inventories__stock_in__unit_cost'))
         ).filter(total_stock__gt=0).order_by('sku_code')
+    
+    # 计算平均成本（显示110%的成本）
+    markup_rate = Decimal('1.1')  # 使用Decimal类型的1.1
+    for product in products:
+        if product.total_stock and product.total_cost:
+            actual_avg_cost = product.total_cost / product.total_stock
+            product.avg_cost = round(actual_avg_cost * markup_rate, 2)  # 使用Decimal进行计算
+        else:
+            product.avg_cost = Decimal('0')
     
     # 处理图片URL
     for product in products:

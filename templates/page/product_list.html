@@ -81,14 +81,20 @@
                     </div>
                     <div class="p-3">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="text-muted me-2">{{ product.sku_code }}</span>
+                            <strong class="me-2">{{ product.sku_code }}</strong>
                             <span class="text-truncate">{{ product.sku_name }}</span>
                         </div>
-                        <div class="text-muted">
-                            {% trans '库存：' %}
-                            <span class="{% if product.total_stock %}text-success{% else %}text-danger{% endif %} fw-bold">
-                                {{ product.total_stock|default:0 }}
-                            </span>
+                        <div class="d-flex justify-content-between text-muted">
+                            <div>
+                                {% trans '库存：' %}
+                                <span class="{% if product.total_stock %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                    {{ product.total_stock|default:0 }}
+                                </span>
+                            </div>
+                            <div>
+                                {% trans '均价：' %}
+                                <span class="fw-bold">¥{{ product.avg_cost }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
