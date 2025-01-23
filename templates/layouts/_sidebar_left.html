@@ -4,42 +4,11 @@
                 aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="nav-item dropdown text-center mt-4">
-            {% if user.is_authenticated %}
-                <a href="#" class="nav-link d-flex lh-1 text-reset p-0 align-items-center justify-content-center" data-bs-toggle="dropdown" aria-label="Open user menu">
-                    <div class="text-center">
-                        {% load static %}
-                        <span class="avatar avatar-lg mb-2" style="background-color: #206bc4">
-                            <img src="{% static 'avatars/044m.jpg' %}" alt="">
-                        </span>
 
-                        <div class="d-none d-xl-block">
-                            <div>{{ user.username }}</div>
-                        </div>
-                    </div>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                    <a href="" class="dropdown-item">个人资料</a>
-                    <div class="dropdown-divider"></div>
-                    <a href="{% url 'muggle:logout' %}" class="dropdown-item">退出登录</a>
-                </div>
-            {% else %}
-                <a href="{% url 'muggle:login' %}" class="nav-link d-flex lh-1 text-reset p-0 align-items-center justify-content-center">
-                    <div class="text-center">
-                        <span class="avatar avatar-lg mb-2" style="background-color: #626976">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"></path>
-                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path>
-                            </svg>
-                        </span>
-                        <div class="d-none d-xl-block">
-                            <div>未登录</div>
-                        </div>
-                    </div>
-                </a>
-            {% endif %}
+        <div class="nav-item dropdown text-center mt-4">
+
         </div>
+
         <div class="collapse navbar-collapse" id="sidebar-menu">
             <ul class="navbar-nav pt-lg-3">
                 {% include 'layouts/_sidebar_left_ul/_dashboard.html' %}

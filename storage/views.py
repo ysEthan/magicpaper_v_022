@@ -49,7 +49,8 @@ def warehouse_list(request):
     context = {
         'warehouses': warehouses,
         'search_query': search_query,
-        'active_menu': 'storage_warehouse'
+        'active_menu': 'storage',
+        'active_submenu': 'warehouse'
     }
     return render(request, 'storage/warehouse/list.html', context)
 
@@ -72,7 +73,8 @@ def warehouse_detail(request, pk):
         'recent_stock_ins': recent_stock_ins,
         'recent_stock_outs': recent_stock_outs,
         'inventories': inventories,
-        'active_menu': 'storage_warehouse'
+        'active_menu': 'storage',
+        'active_submenu': 'warehouse'
     }
     return render(request, 'storage/warehouse/detail.html', context)
 
@@ -88,7 +90,12 @@ def warehouse_create(request):
     else:
         form = WarehouseForm()
     
-    return render(request, 'storage/warehouse/form.html', {'form': form, 'title': '创建仓库', 'active_menu': 'storage_warehouse'})
+    return render(request, 'storage/warehouse/form.html', {
+        'form': form, 
+        'title': '创建仓库', 
+        'active_menu': 'storage',
+        'active_submenu': 'warehouse'
+    })
 
 @login_required
 def warehouse_edit(request, pk):
@@ -103,7 +110,12 @@ def warehouse_edit(request, pk):
     else:
         form = WarehouseForm(instance=warehouse)
     
-    return render(request, 'storage/warehouse/form.html', {'form': form, 'title': '编辑仓库', 'active_menu': 'storage_warehouse'})
+    return render(request, 'storage/warehouse/form.html', {
+        'form': form, 
+        'title': '编辑仓库',
+        'active_menu': 'storage',
+        'active_submenu': 'warehouse'
+    })
 
 @login_required
 def inventory_list(request):
@@ -135,7 +147,9 @@ def inventory_list(request):
         'warehouses': warehouses,
         'warehouse_id': warehouse_id,
         'sku_code': '' if sku_code == 'None' else sku_code,
-        'batch_code': '' if batch_code == 'None' else batch_code
+        'batch_code': '' if batch_code == 'None' else batch_code,
+        'active_menu': 'storage',
+        'active_submenu': 'inventory'
     }
     return render(request, 'storage/inventory/list.html', context)
 
@@ -177,7 +191,8 @@ def stock_in_list(request):
         'stock_in_code': stock_in_code if stock_in_code != 'None' else '',
         'date_from': date_from,
         'date_to': date_to,
-        'active_menu': 'storage_stock_in'
+        'active_menu': 'storage',
+        'active_submenu': 'stock_in'
     }
     return render(request, 'storage/stock_in/list.html', context)
 
@@ -205,7 +220,12 @@ def stock_in_create(request):
     else:
         form = StockInForm()
     
-    return render(request, 'storage/stock_in/form.html', {'form': form, 'title': '创建入库单', 'active_menu': 'storage_stock_in'})
+    return render(request, 'storage/stock_in/form.html', {
+        'form': form, 
+        'title': '创建入库单', 
+        'active_menu': 'storage',
+        'active_submenu': 'stock_in'
+    })
 
 @login_required
 def stock_out_list(request):
@@ -245,7 +265,8 @@ def stock_out_list(request):
         'stock_out_code': stock_out_code if stock_out_code != 'None' else '',
         'date_from': date_from,
         'date_to': date_to,
-        'active_menu': 'storage_stock_out'
+        'active_menu': 'storage',
+        'active_submenu': 'stock_out'
     }
     return render(request, 'storage/stock_out/list.html', context)
 
@@ -271,7 +292,12 @@ def stock_out_create(request):
     else:
         form = StockOutForm()
     
-    return render(request, 'storage/stock_out/form.html', {'form': form, 'title': '创建出库单', 'active_menu': 'storage_stock_out'})
+    return render(request, 'storage/stock_out/form.html', {
+        'form': form, 
+        'title': '创建出库单', 
+        'active_menu': 'storage',
+        'active_submenu': 'stock_out'
+    })
 
 @login_required
 def sync_stock_in(request):
@@ -500,7 +526,8 @@ def report(request):
         'warehouses': warehouse_data,
         'brands': brand_data,
         'product_types': product_type_data,
-        'active_menu': 'storage_report',
+        'active_menu': 'storage',
+        'active_submenu': 'report',
         'current_month': today.strftime('%Y年%m月')
     }
     return render(request, 'storage/report.html', context)

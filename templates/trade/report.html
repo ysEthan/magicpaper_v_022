@@ -12,29 +12,30 @@
                     <h3 class="card-title">订单报表 - {{ current_month }}</h3>
                 </div>
                 <div class="card-body">
-                    <!-- 总体统计 -->
+                    <!-- 总体统计和趋势图 -->
                     <div class="row mb-4">
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card">
-                                <div class="card-body">
+                        <div class="col-sm-12 col-lg-3">
+                            <div class="card h-100">
+                                <div class="card-body p-3">
                                     <h3 class="card-title mb-2">订单统计</h3>
-                                    <div class="h1 mb-1">{{ total_orders }}</div>
-                                    <div class="text-muted">今日新增: <strong class="h2 mb-0">{{ new_orders_today }}</strong> | 待发货: <strong class="text-danger h2 mb-0">{{ pending_orders }}</strong> ({{ pending_orders_percentage }}%)</div>
+                                    <div class="d-flex align-items-baseline mb-1">
+                                        <div class="h1 mb-0 me-3">{{ total_orders }}</div>
+                                        <div class="h2 mb-0 text-blue">$ {{ month_amount|floatformat:2 }}</div>
+                                    </div>
+                                    <div class="text-muted">今日新增: <strong>{{ new_orders_today }}</strong> | 待发货: <strong class="text-danger">{{ pending_orders }}</strong> ({{ pending_orders_percentage }}%) | 环比: <strong>{{ month_over_month }}%</strong></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 class="card-title mb-2">本月销售额</h3>
-                                    <div class="h1 mb-1">¥{{ month_amount|floatformat:2 }}</div>
-                                    <div class="text-muted">环比: <strong class="h2 mb-0">{{ month_over_month }}%</strong></div>
+                        <div class="col-sm-12 col-lg-9">
+                            <div class="card h-100">
+                                <div class="card-body p-3">
+                                    <div id="order-trend-chart" style="height: 100%;"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 订单趋势和类型统计 -->
+                    <!-- 订单类型统计 -->
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
@@ -42,9 +43,6 @@
                                     <h5 class="card-title mb-0">订单分析</h5>
                                 </div>
                                 <div class="card-body">
-                                    <!-- 趋势图 -->
-                                    <div id="order-trend-chart" style="height: 240px;" class="mb-4"></div>
-                                    
                                     <!-- 类型统计表格 -->
                                     <div style="width: 60%; margin-left: 10px">
                                         <div class="table-responsive">
@@ -62,7 +60,7 @@
                                                     <tr>
                                                         <td class="text-center">{{ type.name }}</td>
                                                         <td class="text-center">{{ type.count }}</td>
-                                                        <td class="text-center">¥{{ type.amount|floatformat:2 }}</td>
+                                                        <td class="text-center">$ {{ type.amount|floatformat:2 }}</td>
                                                         <td class="text-center">{{ type.percentage }}%</td>
                                                     </tr>
                                                     {% endfor %}
@@ -92,25 +90,34 @@
                 trigger: 'axis'
             },
             grid: {
-                left: '2%',
-                right: '5%',
+                left: '0%',
+                right: '0%',
                 top: '3%',
-                bottom: '3%',
+                bottom: '0%',
                 containLabel: true
             },
             xAxis: {
                 type: 'category',
-                data: {{ trend_dates|safe }}
+                data: {{ trend_dates|safe }},
+                axisLabel: {
+                    interval: 'auto',
+                    rotate: 0
+                }
             },
             yAxis: {
                 type: 'value',
-                name: '订单数量'
+                name: ''
             },
             series: [
                 {
                     name: '订单数量',
                     type: 'line',
-                    data: {{ trend_counts|safe }}
+                    data: {{ trend_counts|safe }},
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: {
+                        width: 2
+                    }
                 }
             ]
         };

@@ -31,7 +31,9 @@ def carrier_list(request):
     
     return render(request, 'logistics/carrier/list.html', {
         'carriers': carriers,
-        'search_term': search_term
+        'search_term': search_term,
+        'active_menu': 'logistics',
+        'active_submenu': 'carrier'
     })
 
 @login_required

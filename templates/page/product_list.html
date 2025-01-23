@@ -5,19 +5,64 @@
 
 {% block content %}
 <div class="container-xl mt-2">
+    <!-- 搜索框 -->
+    <div class="mb-3">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" 
+                   class="form-control" 
+                   name="search" 
+                   value="{{ search_query }}" 
+                   placeholder="{% trans '输入SKU编码或名称搜索...' %}">
+            {% if current_platform %}
+            <input type="hidden" name="platform" value="{{ current_platform }}">
+            {% endif %}
+            {% if current_warehouse %}
+            <input type="hidden" name="warehouse" value="{{ current_warehouse }}">
+            {% endif %}
+            {% if current_brand %}
+            <input type="hidden" name="brand" value="{{ current_brand }}">
+            {% endif %}
+            <button type="submit" class="btn btn-primary">
+                {% trans '搜索' %}
+            </button>
+            {% if search_query %}
+            <a href="?{% if current_platform %}platform={{ current_platform }}{% endif %}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+               class="btn btn-outline-secondary">
+                {% trans '清除搜索' %}
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
     <!-- 筛选区 -->
     <div class="mb-3">
         <!-- 平台筛选 -->
         <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
             <div class="btn-group">
-                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                    class="btn {% if not current_platform %}btn-primary{% else %}btn-outline-primary{% endif %}">
                     {% trans '全部类型' %}
                 </a>
                 {% for type_code, type_name in product_types %}
-                <a href="?platform={{ type_code }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                <a href="?platform={{ type_code }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                    class="btn {% if current_platform == type_code %}btn-primary{% else %}btn-outline-primary{% endif %}">
                     {{ type_name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 品类筛选 -->
+        <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
+            <div class="btn-group">
+                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {% trans '全部品类' %}
+                </a>
+                {% for category in categories %}
+                <a href="?category={{ category.id }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="btn {% if current_category == category.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {{ category.category_name_zh }}
                 </a>
                 {% endfor %}
             </div>
@@ -26,12 +71,12 @@
         <!-- 品牌筛选 -->
         <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
             <div class="btn-group">
-                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}" 
+                <a href="?{% if current_warehouse %}warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                    class="btn {% if not current_brand %}btn-primary{% else %}btn-outline-primary{% endif %}">
                     {% trans '全部品牌' %}
                 </a>
                 {% for brand in brands %}
-                <a href="?brand={{ brand.id }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}" 
+                <a href="?brand={{ brand.id }}{% if current_warehouse %}&warehouse={{ current_warehouse }}{% endif %}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                    class="btn {% if current_brand == brand.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                     {{ brand.name }}
                 </a>
@@ -42,12 +87,12 @@
         <!-- 仓库筛选 -->
         <div class="d-flex justify-content-start" style="overflow-x: auto;">
             <div class="btn-group">
-                <a href="?{% if current_platform %}platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                <a href="?{% if current_platform %}platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                    class="btn {% if not current_warehouse %}btn-primary{% else %}btn-outline-primary{% endif %}">
                     {% trans '全部仓库' %}
                 </a>
                 {% for warehouse in warehouses %}
-                <a href="?warehouse={{ warehouse.id }}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}" 
+                <a href="?warehouse={{ warehouse.id }}{% if current_platform %}&platform={{ current_platform }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
                    class="btn {% if current_warehouse == warehouse.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
                     {{ warehouse.warehouse_name }}
                 </a>

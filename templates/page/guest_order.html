@@ -1,0 +1,357 @@
+{% extends "public-base.html" %}
+{% load static %}
+
+{% block title %}访客下单{% endblock %}
+
+{% block extra_css %}
+<style>
+    .item-row {
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+    }
+    .remove-item {
+        color: #dc3545;
+        cursor: pointer;
+    }
+    .sku-info {
+        font-size: 0.875rem;
+        color: #666;
+        margin-top: 4px;
+    }
+    .product-image {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    .product-image-placeholder {
+        width: 80px;
+        height: 80px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .total-price-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 4px;
+        text-align: right;
+    }
+    .total-price-label {
+        font-size: 1.1rem;
+        color: #666;
+        margin-right: 10px;
+    }
+    .total-price-value {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #206bc4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">访客下单</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="orderForm">
+                        {% csrf_token %}
+                        {% if messages %}
+                        <div class="alert alert-info" role="alert">
+                            {% for message in messages %}
+                            {{ message }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.name.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{{ form.phone.label }}</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.phone.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">{{ form.address.label }}</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.address.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3 mt-3">
+                            <label class="form-label">商品信息</label>
+                            <div id="itemsContainer">
+                                <!-- 商品列表将在这里动态生成 -->
+                            </div>
+                            <button type="button" class="btn btn-outline-primary mt-2" id="addItem">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                                添加商品
+                            </button>
+                            <div class="total-price-section">
+                                <span class="total-price-label">订单总价：</span>
+                                <span class="total-price-value">¥0.00</span>
+                            </div>
+                            {{ form.items_json }}
+                            {% if form.items_json.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.items_json.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">{{ form.remark.label }}</label>
+                            {{ form.remark }}
+                            {% if form.remark.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.remark.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-footer">
+                            <button type="submit" class="btn btn-primary">提交订单</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const itemsContainer = document.getElementById('itemsContainer');
+    const addItemButton = document.getElementById('addItem');
+    const itemsJsonInput = document.getElementById('id_items_json');
+    const orderForm = document.getElementById('orderForm');
+
+    // 添加商品行
+    function addItemRow() {
+        const itemRow = document.createElement('div');
+        itemRow.className = 'item-row';
+        itemRow.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-2 mb-2">
+                    <div class="product-image-placeholder" id="imageContainer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                            <line x1="15" y1="8" x2="15.01" y2="8"></line>
+                            <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                            <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                            <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <input type="text" class="form-control sku-input" placeholder="商品编码" required>
+                    <div class="sku-info"></div>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <input type="number" class="form-control quantity-input" placeholder="数量" min="1" required>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <input type="text" class="form-control price-display" placeholder="单价" readonly>
+                </div>
+                <div class="col-md-2 mb-2 text-end">
+                    <span class="remove-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                            <line x1="4" y1="7" x2="20" y2="7" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        `;
+        itemsContainer.appendChild(itemRow);
+
+        // 绑定删除按钮事件
+        itemRow.querySelector('.remove-item').addEventListener('click', function() {
+            itemRow.remove();
+            updateItemsJson();
+        });
+
+        // 绑定输入事件
+        itemRow.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                if (e.target.classList.contains('sku-input')) {
+                    const skuCode = e.target.value.trim();
+                    const row = e.target.closest('.item-row');
+                    const priceDisplay = row.querySelector('.price-display');
+                    const skuInfo = row.querySelector('.sku-info');
+                    const imageContainer = row.querySelector('#imageContainer');
+                    
+                    if (skuCode) {
+                        skuInfo.textContent = '加载中...';
+                        skuInfo.style.color = '#666';
+                        priceDisplay.value = '';
+                        
+                        fetch(`{% url 'page:get_sku_price' %}?sku_code=${encodeURIComponent(skuCode)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    priceDisplay.value = data.price.toFixed(2);
+                                    skuInfo.textContent = data.sku_name;
+                                    skuInfo.style.color = '#666';
+                                    
+                                    // 更新商品图片
+                                    if (data.img_url) {
+                                        imageContainer.innerHTML = `<img src="${data.img_url}" class="product-image" alt="${data.sku_name}">`;
+                                    } else {
+                                        // 如果没有图片，显示占位图标
+                                        imageContainer.innerHTML = `
+                                            <div class="product-image-placeholder">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                    <line x1="15" y1="8" x2="15.01" y2="8"></line>
+                                                    <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                                                    <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                                                    <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                                                </svg>
+                                            </div>`;
+                                    }
+                                } else {
+                                    priceDisplay.value = '';
+                                    skuInfo.textContent = '商品不存在';
+                                    skuInfo.style.color = '#dc3545';
+                                    // 重置为占位图标
+                                    imageContainer.innerHTML = `
+                                        <div class="product-image-placeholder">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                                <line x1="15" y1="8" x2="15.01" y2="8"></line>
+                                                <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                                                <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                                                <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                                            </svg>
+                                        </div>`;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                priceDisplay.value = '';
+                                skuInfo.textContent = '获取商品信息失败';
+                                skuInfo.style.color = '#dc3545';
+                                // 重置为占位图标
+                                imageContainer.innerHTML = `
+                                    <div class="product-image-placeholder">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                            <line x1="15" y1="8" x2="15.01" y2="8"></line>
+                                            <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                                            <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                                            <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                                        </svg>
+                                    </div>`;
+                            });
+                    } else {
+                        // 清空商品信息
+                        priceDisplay.value = '';
+                        skuInfo.textContent = '';
+                        // 重置为占位图标
+                        imageContainer.innerHTML = `
+                            <div class="product-image-placeholder">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <line x1="15" y1="8" x2="15.01" y2="8"></line>
+                                    <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                                    <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                                    <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                                </svg>
+                            </div>`;
+                    }
+                    updateItemsJson();
+                } else if (e.target.classList.contains('quantity-input')) {
+                    updateItemsJson(); // 数量变化时更新总价
+                }
+            });
+        });
+    }
+
+    // 计算并更新总价
+    function updateTotalPrice() {
+        let totalPrice = 0;
+        itemsContainer.querySelectorAll('.item-row').forEach(row => {
+            const priceInput = row.querySelector('.price-display');
+            const quantityInput = row.querySelector('.quantity-input');
+            const price = parseFloat(priceInput.value) || 0;
+            const quantity = parseInt(quantityInput.value) || 0;
+            totalPrice += price * quantity;
+        });
+        document.querySelector('.total-price-value').textContent = `¥${totalPrice.toFixed(2)}`;
+    }
+
+    // 更新隐藏的items_json字段
+    function updateItemsJson() {
+        const items = [];
+        itemsContainer.querySelectorAll('.item-row').forEach(row => {
+            const skuInput = row.querySelector('.sku-input');
+            const quantityInput = row.querySelector('.quantity-input');
+            if (skuInput.value && quantityInput.value) {
+                items.push({
+                    sku_code: skuInput.value.trim(),
+                    quantity: parseInt(quantityInput.value)
+                });
+            }
+        });
+        itemsJsonInput.value = JSON.stringify(items);
+        updateTotalPrice(); // 更新总价
+    }
+
+    // 绑定添加商品按钮事件
+    addItemButton.addEventListener('click', addItemRow);
+
+    // 表单提交前验证
+    orderForm.addEventListener('submit', function(e) {
+        const items = JSON.parse(itemsJsonInput.value || '[]');
+        if (items.length === 0) {
+            e.preventDefault();
+            alert('请至少添加一个商品');
+        }
+    });
+
+    // 初始添加一行商品
+    addItemRow();
+});
+</script>
+{% endblock %} 

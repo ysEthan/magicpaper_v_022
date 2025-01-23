@@ -353,7 +353,7 @@ def report(request):
                 'name': category.category_name_zh,
                 'spu_count': category.spu_count,
             })
-
+        
         # 趋势数据 - 优化查询，使用聚合函数
         dates = [(today - timedelta(days=i)).date() for i in range(29, -1, -1)]
         
@@ -378,11 +378,17 @@ def report(request):
             'unreviewed_rate': round(unreviewed_skus / total_products * 100 if total_products > 0 else 0, 1),
             'brand_stats': brand_stats,
             'category_stats': category_stats,
-            'product_trend': json.dumps(product_trend)
+            'product_trend': json.dumps(product_trend),
+            'active_menu': 'gallery',
+            'active_submenu': 'report'
         }
         
         # 设置缓存，5分钟过期
         cache.set(cache_key, report_data, 300)
+    else:
+        # Add active menu variables to cached data
+        report_data['active_menu'] = 'gallery'
+        report_data['active_submenu'] = 'report'
     
     return render(request, 'gallery/report.html', report_data)
 

@@ -89,7 +89,8 @@ class OrderListView(LoginRequiredMixin, ListView):
         context['current_shop'] = self.request.GET.get('shop', '')
         context['search_query'] = self.request.GET.get('search', '')
         # 设置当前菜单
-        context['active_menu'] = 'trade_order'
+        context['active_menu'] = 'trade'
+        context['active_submenu'] = 'order'
         return context
 
 class OrderDetailView(LoginRequiredMixin, DetailView):
@@ -103,7 +104,8 @@ class OrderDetailView(LoginRequiredMixin, DetailView):
         # 获取订单商品明细
         context['items'] = self.object.items.all()
         # 设置当前菜单
-        context['active_menu'] = 'trade_order'
+        context['active_menu'] = 'trade'
+        context['active_submenu'] = 'order'
         return context
 
 class OrderCreateView(LoginRequiredMixin, CreateView):
@@ -118,7 +120,8 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['shops'] = Shop.objects.filter(status=1)
         # 设置当前菜单
-        context['active_menu'] = 'trade_order_create'
+        context['active_menu'] = 'trade'
+        context['active_submenu'] = 'order'
         return context
 
     def form_valid(self, form):
@@ -136,7 +139,8 @@ class OrderUpdateView(LoginRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # 设置当前菜单
-        context['active_menu'] = 'trade_order'
+        context['active_menu'] = 'trade'
+        context['active_submenu'] = 'order'
         return context
     
     def get_success_url(self):
@@ -199,8 +203,10 @@ def report(request):
         today_orders = orders.filter(order_place_time__date=today.date()).count()
         month_sales = orders.filter(
             order_place_time__gte=month_start
+        ).annotate(
+            usd_amount=F('total_amount') * F('exchange_rate_to_usd')
         ).aggregate(
-            total=Sum('total_amount')
+            total=Sum('usd_amount')
         )['total'] or 0
         
         # 趋势数据 - 优化查询，使用聚合函数
@@ -225,9 +231,12 @@ def report(request):
         last_month_amount = orders.filter(
             order_place_time__gte=last_month_start,
             order_place_time__lt=month_start
+        ).annotate(
+            usd_amount=F('total_amount') * F('exchange_rate_to_usd')
         ).aggregate(
-            total=Sum('total_amount')
+            total=Sum('usd_amount')
         )['total'] or 0
+        
         month_over_month = round(
             ((month_sales - last_month_amount) / last_month_amount * 100) if last_month_amount > 0 else 0,
             1
@@ -239,7 +248,11 @@ def report(request):
             type_orders = orders.filter(order_type=type_code)
             count = type_orders.count()
             if count > 0:  # 只添加有订单的类型
-                amount = type_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+                amount = type_orders.annotate(
+                    usd_amount=F('total_amount') * F('exchange_rate_to_usd')
+                ).aggregate(
+                    total=Sum('usd_amount')
+                )['total'] or 0
                 percentage = round((count / total_orders * 100) if total_orders > 0 else 0, 1)
                 
                 order_types.append({

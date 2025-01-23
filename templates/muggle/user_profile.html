@@ -1,0 +1,46 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-xl">
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">个人信息</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                <img src="{% if user.avatar %}{{ user.avatar.url }}{% else %}{% static 'images/default-avatar.png' %}{% endif %}" 
+                                     class="avatar avatar-xl mb-3" alt="用户头像">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">用户名</label>
+                                <div class="form-control-plaintext">{{ user.username }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">邮箱</label>
+                                <div class="form-control-plaintext">{{ user.email|default:"未设置" }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">用户角色</label>
+                                <div class="form-control-plaintext">
+                                    {% if user.is_staff %}管理员{% else %}普通用户{% endif %}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">加入时间</label>
+                                <div class="form-control-plaintext">{{ user.date_joined|date:"Y-m-d H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

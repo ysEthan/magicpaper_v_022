@@ -349,8 +349,7 @@ class WDTOrderSync:
                     # 检查仓库信息
                     warehouse = self._get_warehouse_by_code(order_data.get('warehouseNo'))
                     if not warehouse:
-                        logger.warning(f"订单 {order_number} 找不到对应的仓库信息(warehouseNo: {order_data.get('warehouseNo')}), 跳过该订单")
-                        continue
+                        logger.warning(f"订单 {order_number} 找不到对应的仓库信息(warehouseNo: {order_data.get('warehouseNo')})")
 
                     # 获取或创建店铺
                     shop_code = order_data.get('shopNo')
@@ -436,49 +435,52 @@ class WDTOrderSync:
                                 'quantity': int(item.get('num', 0))
                             })
 
-                        # 获取物流服务
-                        service = self._get_service_by_name(order_data.get('logisticsText'))
-                        if not service:
-                            logger.info(f"订单 {order_number} 没有物流服务信息，跳过包裹创建")
-                            continue
-
-                        # 创建包裹
-                        package = Package(
-                            order=order,
-                            warehouse=warehouse,
-                            service=service,
-                            tracking_no=order_data.get('logisticsNo', ''),
-                            pkg_status_code=self.PACKAGE_STATUS_MAP.get(order.status, '0'),
-                            items=items_data
-                        )
-                        package.save()
-                        
-                        # 创建包裹创建轨迹记录
-                        self._create_tracking_record(
-                            package=package,
-                            status=0,  # 待发货
-                            description="包裹已创建"
-                        )
-                        
-                        # 如果有发货时间，创建发货轨迹记录
-                        delivery_time = order_data.get('deliveryTime')
-                        if delivery_time:
-                            delivery_time = datetime.strptime(delivery_time, '%Y-%m-%dT%H:%M:%S')
-                            self._create_tracking_record(
-                                package=package,
-                                status=1,  # 待揽收
-                                description="包裹已发货，等待揽收",
-                                tracking_time=delivery_time
-                            )
-                        
-                        # 更新订单的package_id字段
-                        order.package_id = str(package.id)
-                        order.save()
-                        
-                        logger.info(f"创建包裹成功，包裹ID: {package.id}, 物流单号: {package.tracking_no}, 物流服务: {service}, 仓库: {warehouse}")
+                        # 只有在有仓库信息时才创建包裹
+                        if warehouse:
+                            # 获取物流服务
+                            service = self._get_service_by_name(order_data.get('logisticsText'))
+                            if service:
+                                # 创建包裹
+                                package = Package(
+                                    order=order,
+                                    warehouse=warehouse,
+                                    service=service,
+                                    tracking_no=order_data.get('logisticsNo', ''),
+                                    pkg_status_code=self.PACKAGE_STATUS_MAP.get(order.status, '0'),
+                                    items=items_data
+                                )
+                                package.save()
+                                
+                                # 创建包裹创建轨迹记录
+                                self._create_tracking_record(
+                                    package=package,
+                                    status=0,  # 待发货
+                                    description="包裹已创建"
+                                )
+                                
+                                # 如果有发货时间，创建发货轨迹记录
+                                delivery_time = order_data.get('deliveryTime')
+                                if delivery_time:
+                                    delivery_time = datetime.strptime(delivery_time, '%Y-%m-%dT%H:%M:%S')
+                                    self._create_tracking_record(
+                                        package=package,
+                                        status=1,  # 待揽收
+                                        description="包裹已发货，等待揽收",
+                                        tracking_time=delivery_time
+                                    )
+                                
+                                # 更新订单的package_id字段
+                                order.package_id = str(package.id)
+                                order.save()
+                                
+                                logger.info(f"创建包裹成功，包裹ID: {package.id}, 物流单号: {package.tracking_no}, 物流服务: {service}, 仓库: {warehouse}")
+                            else:
+                                logger.warning(f"订单 {order_number} 没有物流服务信息，跳过包裹创建")
+                        else:
+                            logger.info(f"订单 {order_number} 没有仓库信息，跳过包裹创建")
 
                         result['created'] += 1
-                        logger.info(f"订单 {order_number} 及其包裹创建成功")
+                        logger.info(f"订单 {order_number} 创建成功" + (" 并创建包裹" if warehouse else "，未创建包裹"))
 
                 except Exception as e:
                     result['failed'] += 1
@@ -539,3 +541,65 @@ class WDTOrderSync:
             logger.info(f"创建包裹轨迹记录成功: {package.tracking_no}, 状态: {status}")
         except Exception as e:
             logger.error(f"创建包裹轨迹记录失败: {str(e)}") 
+
+    def create_order(self, order_data):
+        """创建订单到旺店通系统"""
+        try:
+            # 获取第一个订单的数据（因为order_data是一个列表）
+            order = order_data[0]
+            
+            # 计算商品总金额
+            total_amount = sum(item['price'] * item['actualNum'] for item in order['goods'])
+            
+            # 修改仓库名称、备注、币种和支付金额
+            order['baseInfo']['warehouseName'] = "丰宝云仓-番禺"
+            order['baseInfo']['erpRemark'] = "线下订单"
+            order['baseInfo']['currencyCode'] = "CNY"
+            order['baseInfo']['paid'] = total_amount
+            
+            # 设置收件人国家
+            order['receiverInfo']['receiverCountryName'] = "中国"
+            
+            # 构建API请求数据
+            body = {
+                "baseInfo": order['baseInfo'],
+                "goods": order['goods'],
+                "receiverInfo": order['receiverInfo']
+            }
+            
+            body_str = json.dumps([body], ensure_ascii=False, separators=(",", ":"))
+            params, headers = self.generate_sign(body_str)
+            
+            url = f"{self.base_url}/create/trade"
+            response = requests.post(url, params=params, headers=headers, data=body_str)
+            
+            if response.status_code != 200:
+                raise Exception(f"API请求失败: {response.text}")
+            
+            response_data = response.json()
+            
+            # 检查是否有导入错误
+            if response_data.get('data', {}).get('errorImportData'):
+                error_data = response_data['data']['errorImportData'][0]
+                raise Exception(f"订单导入失败: {error_data.get('message')} (错误代码: {error_data.get('code')})")
+            
+            # 检查是否有成功创建的订单
+            success_trades = response_data.get('data', {}).get('successCreateTrades', [])
+            if not success_trades:
+                raise Exception("订单创建失败：未返回成功创建的订单信息")
+            
+            # 返回成功响应
+            return {
+                'success': True,
+                'code': 0,
+                'message': '订单创建成功',
+                'data': success_trades[0]  # 返回第一个成功创建的订单信息
+            }
+        
+        except Exception as e:
+            logger.error(f"创建订单失败: {str(e)}")
+            return {
+                'success': False,
+                'code': -1,
+                'message': str(e)
+            } 

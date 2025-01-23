@@ -12,6 +12,14 @@ from trade.models import Order
 from procurement.models import PurchaseOrder
 from logistics.models import Package
 from gallery.models import Brand
+from gallery.models import Category
+from .forms import GuestOrderForm
+from trade.services import WDTOrderSync
+from django.contrib import messages
+from django.shortcuts import redirect
+import uuid
+from django.http import JsonResponse
+import random  # 添加random模块导入
 
 @login_required
 def index_view(request):
@@ -34,8 +42,10 @@ def index_view(request):
     week_orders = orders.filter(order_place_time__gte=week_start).count()
     month_sales = orders.filter(
         order_place_time__gte=month_start
+    ).annotate(
+        usd_amount=F('total_amount') * F('exchange_rate_to_usd')
     ).aggregate(
-        total=Sum('total_amount')
+        total=Sum('usd_amount')
     )['total'] or 0
     
     # 采购统计 - 使用单次查询
@@ -284,6 +294,8 @@ def product_list(request):
     warehouse_id = request.GET.get('warehouse')
     platform = request.GET.get('platform')
     brand_id = request.GET.get('brand')
+    search_query = request.GET.get('search', '').strip()
+    category_id = request.GET.get('category')
     
     # 获取所有启用的仓库
     warehouses = Warehouse.objects.filter(status=True).order_by('warehouse_code')
@@ -291,8 +303,22 @@ def product_list(request):
     # 获取所有品牌
     brands = Brand.objects.filter(status=True).order_by('name')
     
+    # 获取所有启用的二级品类
+    categories = Category.objects.filter(
+        status=True,  # 状态为启用
+        level=2,      # 二级类目
+        parent__status=True  # 父类目也必须启用
+    ).order_by('category_name_zh')
+    
     # 构建查询
     products_query = SKU.objects.filter(status=True).select_related('spu')
+    
+    # 搜索过滤
+    if search_query:
+        products_query = products_query.filter(
+            Q(sku_code__icontains=search_query) |
+            Q(sku_name__icontains=search_query)
+        )
     
     # 平台筛选
     if platform:
@@ -301,6 +327,27 @@ def product_list(request):
     # 品牌筛选
     if brand_id:
         products_query = products_query.filter(spu__brand_id=brand_id)
+    
+    # 品类筛选
+    if category_id:
+        try:
+            # 获取选中的类目
+            selected_category = Category.objects.get(id=category_id)
+            
+            # 如果是二级类目，获取其所有子类目（包括自身）
+            if selected_category.level == 2:
+                category_ids = list(Category.objects.filter(
+                    Q(id=category_id) |  # 包含所选类目自身
+                    Q(parent__id=category_id) |  # 包含直接子类目
+                    Q(parent__parent__id=category_id)  # 包含孙子类目
+                ).values_list('id', flat=True))
+            else:
+                category_ids = [category_id]
+            
+            # 使用所有相关类目ID进行筛选
+            products_query = products_query.filter(spu__category_id__in=category_ids)
+        except Category.DoesNotExist:
+            pass
     
     # 仓库筛选
     if warehouse_id:
@@ -348,4 +395,324 @@ def product_list(request):
         'current_platform': platform,
         'brands': brands,
         'current_brand': brand_id,
+        'search_query': search_query,
+        'categories': categories,
+        'current_category': category_id,
+    })
+
+def products2(request):
+    """商品展示页面"""
+    # 定义需要排除的品牌和仓库
+    excluded_brands = ['hitems', 'Melyn']
+    excluded_warehouses = ['员工领用仓', '样品3号仓']
+    
+    # 获取筛选参数
+    warehouse_id = request.GET.get('warehouse')
+    platform = request.GET.get('platform')
+    brand_id = request.GET.get('brand')
+    search_query = request.GET.get('search', '').strip()
+    category_id = request.GET.get('category')
+    
+    # 获取所有启用的仓库（排除特定仓库）
+    warehouses = Warehouse.objects.filter(
+        status=True
+    ).exclude(
+        warehouse_name__in=excluded_warehouses
+    ).order_by('warehouse_code')
+    
+    # 获取所有品牌（排除特定品牌）
+    brands = Brand.objects.filter(
+        status=True
+    ).exclude(
+        name__in=excluded_brands
+    ).order_by('name')
+    
+    # 获取所有启用的二级品类
+    categories = Category.objects.filter(
+        status=True,  # 状态为启用
+        level=2,      # 二级类目
+        parent__status=True  # 父类目也必须启用
+    ).order_by('category_name_zh')
+    
+    # 获取需要排除的品牌ID列表
+    excluded_brand_ids = list(Brand.objects.filter(
+        name__in=excluded_brands
+    ).values_list('id', flat=True))
+    
+    # 构建基础查询，排除特定品牌的商品
+    products_query = SKU.objects.filter(
+        status=True
+    ).exclude(
+        spu__brand_id__in=excluded_brand_ids  # 使用exclude和__in来排除
+    ).select_related('spu')
+    
+    # 搜索过滤
+    if search_query:
+        products_query = products_query.filter(
+            Q(sku_code__icontains=search_query) |
+            Q(sku_name__icontains=search_query)
+        )
+    
+    # 平台筛选
+    if platform:
+        products_query = products_query.filter(spu__product_type=platform)
+    
+    # 品牌筛选
+    if brand_id:
+        products_query = products_query.filter(spu__brand_id=brand_id)
+    
+    # 品类筛选
+    if category_id:
+        try:
+            selected_category = Category.objects.get(id=category_id)
+            if selected_category.level == 2:
+                category_ids = list(Category.objects.filter(
+                    Q(id=category_id) |
+                    Q(parent__id=category_id) |
+                    Q(parent__parent__id=category_id)
+                ).values_list('id', flat=True))
+            else:
+                category_ids = [category_id]
+            products_query = products_query.filter(spu__category_id__in=category_ids)
+        except Category.DoesNotExist:
+            pass
+    
+    # 获取需要排除的仓库ID列表
+    excluded_warehouse_ids = list(Warehouse.objects.filter(
+        warehouse_name__in=excluded_warehouses
+    ).values_list('id', flat=True))
+    
+    # 仓库筛选
+    if warehouse_id:
+        # 如果选择了特定仓库，只统计该仓库的库存和成本
+        products = products_query.annotate(
+            total_stock=Sum('inventories__quantity', 
+                          filter=Q(inventories__warehouse_id=warehouse_id)),
+            total_cost=Sum(F('inventories__quantity') * F('inventories__stock_in__unit_cost'),
+                          filter=Q(inventories__warehouse_id=warehouse_id))
+        ).filter(total_stock__gt=0).order_by('sku_code')
+    else:
+        # 否则统计所有仓库的总库存和成本（排除特定仓库）
+        products = products_query.annotate(
+            total_stock=Sum('inventories__quantity',
+                          filter=~Q(inventories__warehouse_id__in=excluded_warehouse_ids)),
+            total_cost=Sum(F('inventories__quantity') * F('inventories__stock_in__unit_cost'),
+                          filter=~Q(inventories__warehouse_id__in=excluded_warehouse_ids))
+        ).filter(total_stock__gt=0).order_by('sku_code')
+    
+    # 计算平均成本（显示110%的成本）
+    markup_rate = Decimal('1.1')
+    for product in products:
+        if product.total_stock and product.total_cost:
+            actual_avg_cost = product.total_cost / product.total_stock
+            product.avg_cost = round(actual_avg_cost * markup_rate, 2)
+        else:
+            product.avg_cost = Decimal('0')
+    
+    # 处理图片URL
+    for product in products:
+        if product.img_url and not product.img_url.startswith(('http://', 'https://')):
+            product.img_url = f"/media/{product.img_url}"
+    
+    # 产品类型选项
+    PRODUCT_TYPE_CHOICES = [
+        ('math_design', '设计款'),
+        ('ready_made', '现货款'),
+        ('raw_material', '材料'),
+        ('packing_material', '包材'),
+    ]
+    
+    return render(request, 'page/product_list.html', {
+        'products': products,
+        'warehouses': warehouses,
+        'current_warehouse': warehouse_id,
+        'product_types': PRODUCT_TYPE_CHOICES,
+        'current_platform': platform,
+        'brands': brands,
+        'current_brand': brand_id,
+        'search_query': search_query,
+        'categories': categories,
+        'current_category': category_id,
+    })
+
+def get_sku_price(request):
+    """获取SKU价格"""
+    sku_code = request.GET.get('sku_code')
+    try:
+        sku = SKU.objects.get(sku_code=sku_code)
+        # 计算SKU的平均成本
+        total_stock = sku.inventories.aggregate(total=Sum('quantity'))['total'] or 0
+        total_cost = sku.inventories.aggregate(
+            total=Sum(F('quantity') * F('stock_in__unit_cost'))
+        )['total'] or 0
+        
+        if total_stock > 0:
+            avg_cost = total_cost / total_stock
+            # 设置价格为平均成本的110%
+            price = round(float(avg_cost * Decimal('1.1')), 2)
+        else:
+            # 如果没有库存，使用默认价格
+            price = 0
+        
+        # 处理图片URL
+        img_url = sku.img_url
+        if img_url and not img_url.startswith(('http://', 'https://')):
+            img_url = f"/media/{img_url}"
+            
+        return JsonResponse({
+            'success': True,
+            'price': price,
+            'sku_name': sku.sku_name,
+            'img_url': img_url
+        })
+    except SKU.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '商品不存在'
+        })
+
+def guest_order(request):
+    """访客下单页面"""
+    if request.method == 'POST':
+        form = GuestOrderForm(request.POST)
+        if form.is_valid():
+            try:
+                # 获取表单数据
+                data = form.cleaned_data
+                items = data['items_json']  # 已经在表单验证中转换为Python对象
+                
+                # 验证所有SKU是否存在并获取价格
+                invalid_skus = []
+                order_items = []
+                for item in items:
+                    try:
+                        sku = SKU.objects.get(sku_code=item['sku_code'])
+                        # 计算SKU的平均成本
+                        total_stock = sku.inventories.aggregate(total=Sum('quantity'))['total'] or 0
+                        total_cost = sku.inventories.aggregate(
+                            total=Sum(F('quantity') * F('stock_in__unit_cost'))
+                        )['total'] or 0
+                        
+                        if total_stock > 0:
+                            avg_cost = total_cost / total_stock
+                            # 设置价格为平均成本的110%
+                            price = round(float(avg_cost * Decimal('1.1')), 2)
+                        else:
+                            # 如果没有库存，使用默认价格
+                            price = 0
+                            
+                        order_items.append({
+                            "actualNum": item['quantity'],
+                            "discount": 1,
+                            "giftType": 0,
+                            "price": price,
+                            "specNo": item['sku_code']
+                        })
+                    except SKU.DoesNotExist:
+                        invalid_skus.append(item['sku_code'])
+                
+                if invalid_skus:
+                    messages.error(request, f'以下商品编码不存在：{", ".join(invalid_skus)}')
+                    return render(request, 'page/guest_order.html', {
+                        'form': form,
+                        'active_menu': 'page',
+                        'active_submenu': 'guest_order'
+                    })
+                
+                # 生成订单号
+                today = timezone.now().strftime('%y%m%d')
+                # 从缓存中获取当天的订单序号
+                cache_key = f'guest_order_counter_{today}'
+                counter = cache.get(cache_key, 0) + 1
+                # 如果超过999，重置为1
+                if counter > 999:
+                    counter = 1
+                # 更新缓存，设置过期时间为48小时（确保跨天时不会出问题）
+                cache.set(cache_key, counter, 48*60*60)
+                # 生成订单号：GO + 年月日 + 四位随机数 + 三位序号
+                random_number = str(random.randint(1000, 9999))  # 生成4位随机数
+                order_number = f"GO{today}{random_number}{counter:03d}"
+                
+                # 获取当前时间
+                current_time = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+                # 获取48小时后的时间
+                over_time = (timezone.now() + timedelta(hours=48)).strftime('%Y-%m-%d %H:%M:%S')
+                
+                # 构建旺店通API请求数据
+                order_data = [{
+                    "baseInfo": {
+                        "shopName": "jjewelry",
+                        "tid": order_number,
+                        "deliveryTerm": 1,
+                        "currencyCode": "USD",
+                        "tradeTime": current_time,
+                        "payTime": current_time,
+                        "overTime": over_time,
+                        "sellerFullName": "无",
+                        "buyerMessage": data['remark'],
+                        "csRemark": "",
+                        "erpRemark": "",
+                        "warehouseName": "义乌仓",
+                        "logisticsName": "",
+                        "domesticLogisticsName": "",
+                        "paid": 0,
+                        "postAmount": 0,
+                        "discount": 1
+                    },
+                    "goods": order_items,
+                    "receiverInfo": {
+                        "receiverName": data['name'],
+                        "buyerNick": "",
+                        "idCardType": "",
+                        "idCard": "",
+                        "receiverMobile": data['phone'],
+                        "receiverTelno": "",
+                        "buyerEmail": "",
+                        "receiverCountryName": "",
+                        "receiverProvince": "",
+                        "receiverCity": "",
+                        "receiverDistrict": "",
+                        "receiverZip": "",
+                        "receiverAddress": data['address'],
+                        "receiverAddress2": "",
+                        "receiverAddress3": ""
+                    }
+                }]
+                
+                # 打印请求数据
+                print("\n=== 旺店通API请求数据 ===")
+                print(json.dumps(order_data, indent=2, ensure_ascii=False))
+                
+                # 调用旺店通API创建订单
+                sync_service = WDTOrderSync()
+                response = sync_service.create_order(order_data)
+                
+                # 打印API响应
+                print("\n=== 旺店通API响应数据 ===")
+                print(json.dumps(response, indent=2, ensure_ascii=False))
+                
+                # 检查响应状态
+                if isinstance(response, dict) and response.get('code') == 0:
+                    messages.success(request, f'订单提交成功！订单号：{order_number}')
+                else:
+                    error_msg = response.get('message', '未知错误') if isinstance(response, dict) else str(response)
+                    messages.error(request, f'订单提交失败：{error_msg}')
+                    print(f"\n=== 订单提交失败 ===\n错误信息：{error_msg}")
+                    return render(request, 'page/guest_order.html', {
+                        'form': form,
+                        'active_menu': 'page',
+                        'active_submenu': 'guest_order'
+                    })
+                    
+                return redirect('page:guest_order')
+            except Exception as e:
+                print(f"\n=== 发生异常 ===\n{str(e)}")
+                messages.error(request, f'订单提交失败：{str(e)}')
+    else:
+        form = GuestOrderForm()
+    
+    return render(request, 'page/guest_order.html', {
+        'form': form,
+        'active_menu': 'page',
+        'active_submenu': 'guest_order'
     })

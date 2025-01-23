@@ -93,6 +93,12 @@ class Order(models.Model):
         default='normal',
         verbose_name='订单类型'
     )
+    exchange_rate_to_usd = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=1.0,
+        verbose_name='美元汇率'
+    )
     package_id = models.CharField(
         max_length=50,
         null=True,
