@@ -13,13 +13,14 @@ from procurement.models import PurchaseOrder
 from logistics.models import Package
 from gallery.models import Brand
 from gallery.models import Category
-from .forms import GuestOrderForm
+from .forms import GuestOrderForm, GuestOrderQueryForm
 from trade.services import WDTOrderSync
 from django.contrib import messages
 from django.shortcuts import redirect
 import uuid
 from django.http import JsonResponse
 import random  # 添加random模块导入
+from django.urls import reverse_lazy, reverse
 
 @login_required
 def index_view(request):
@@ -398,6 +399,7 @@ def product_list(request):
         'search_query': search_query,
         'categories': categories,
         'current_category': category_id,
+        'page_title': '商品列表',
     })
 
 def products2(request):
@@ -533,6 +535,7 @@ def products2(request):
         'search_query': search_query,
         'categories': categories,
         'current_category': category_id,
+        'page_title': '商品列表',
     })
 
 def get_sku_price(request):
@@ -694,6 +697,20 @@ def guest_order(request):
                 # 检查响应状态
                 if isinstance(response, dict) and response.get('code') == 0:
                     messages.success(request, f'订单提交成功！订单号：{order_number}')
+                    
+                    # 立即触发订单同步，只同步最近1分钟的订单
+                    try:
+                        # 获取1分钟前的时间
+                        start_time = (timezone.now() - timedelta(minutes=1)).strftime('%Y-%m-%d %H:%M:%S')
+                        sync_result = sync_service.sync_orders(start_date=start_time)
+                        print("\n=== 订单同步结果 ===")
+                        print(json.dumps(sync_result, indent=2, ensure_ascii=False))
+                    except Exception as e:
+                        print(f"\n=== 订单同步异常 ===\n{str(e)}")
+                    
+                    # 使用reverse生成正确的URL
+                    query_url = f"{reverse('page:guest_order_query')}?phone={data['phone']}"
+                    return redirect(query_url)
                 else:
                     error_msg = response.get('message', '未知错误') if isinstance(response, dict) else str(response)
                     messages.error(request, f'订单提交失败：{error_msg}')
@@ -701,6 +718,7 @@ def guest_order(request):
                     return render(request, 'page/guest_order.html', {
                         'form': form,
                         'active_menu': 'page',
+                        'page_title': '游客下单',
                         'active_submenu': 'guest_order'
                     })
                     
@@ -714,5 +732,41 @@ def guest_order(request):
     return render(request, 'page/guest_order.html', {
         'form': form,
         'active_menu': 'page',
-        'active_submenu': 'guest_order'
+        'active_submenu': 'guest_order',
+        'page_title': '游客下单页面',
+
+    })
+
+def guest_order_query(request):
+    """访客订单查询页面"""
+    form = GuestOrderQueryForm(request.GET or None)
+    orders = []
+    
+    if form.is_valid():
+        phone = form.cleaned_data['phone']
+        # 从数据库中查询订单，预加载package和items关联数据
+        try:
+            orders = Order.objects.select_related('package').prefetch_related('items__sku').filter(
+                shipping_phone=phone
+            ).order_by('-order_place_time')  # 按下单时间倒序排列
+            
+            # 打印查询结果，用于调试
+            print(f"\n=== 查询结果 ===")
+            print(f"电话号码: {phone}")
+            print(f"订单数量: {orders.count()}")
+            for order in orders:
+                print(f"订单号: {order.order_number}, 类型: {order.order_type}, 电话: {order.shipping_phone}")
+                print(f"物流单号: {order.package.tracking_no if order.package else '-'}")
+            
+            if not orders:
+                messages.info(request, '未找到相关订单')
+        except Exception as e:
+            messages.error(request, f'查询失败：{str(e)}')
+    
+    return render(request, 'page/guest_order_query.html', {
+        'form': form,
+        'page_title': '游客订单查询',
+        'orders': orders,
+        'active_menu': 'page',
+        'active_submenu': 'guest_order_query'
     })

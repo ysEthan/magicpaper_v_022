@@ -40,4 +40,16 @@ class GuestOrderForm(forms.Form):
                     raise forms.ValidationError('商品数量必须大于0')
             return items
         except json.JSONDecodeError:
-            raise forms.ValidationError('商品数据格式错误') 
+            raise forms.ValidationError('商品数据格式错误')
+
+class GuestOrderQueryForm(forms.Form):
+    """访客订单查询表单"""
+    phone = forms.CharField(
+        label='手机号码',
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': '请输入下单时使用的手机号码'
+        })
+    ) 
