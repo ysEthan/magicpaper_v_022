@@ -10,4 +10,8 @@ urlpatterns = [
     path('guest-order/', views.guest_order, name='guest_order'),
     path('guest-order/query/', views.guest_order_query, name='guest_order_query'),
     path('get-sku-price/', views.get_sku_price, name='get_sku_price'),
+
+
+    path('redbook_api/', views.redbook_callback, name='redbook_callback'),
+
 ] 

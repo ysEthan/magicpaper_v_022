@@ -2,8 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from django.db.models import Sum, F
-from django.http import JsonResponse
+from django.db.models import Sum, F, Q
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -11,11 +11,15 @@ from django.utils.decorators import method_decorator
 from .models import Order, Shop, Cart
 from .services import WDTOrderSync
 import logging
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.utils import timezone
 from datetime import timedelta
 import json
 from django.core.cache import cache
+from django.db import models
+import xlsxwriter
+from io import BytesIO
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -281,3 +285,242 @@ def report(request):
         cache.set(cache_key, report_data, 300)
     
     return render(request, 'trade/report.html', report_data)
+
+class SalesDetailView(LoginRequiredMixin, ListView):
+    """销售明细视图"""
+    model = Cart
+    template_name = 'trade/sales_detail.html'
+    context_object_name = 'sales'
+    paginate_by = 20
+
+    def get_queryset(self):
+        # 基础查询
+        queryset = Cart.objects.select_related(
+            'order', 'sku', 'order__shop', 'sku__spu'
+        ).filter(
+            ~Q(order__status='cancelled')  # 排除已取消的订单
+        )
+
+        # 过滤条件
+        shop_id = self.request.GET.get('shop')
+        product_type = self.request.GET.get('product_type')
+        days = self.request.GET.get('days')
+
+        if shop_id:
+            queryset = queryset.filter(order__shop_id=shop_id)
+        if product_type:
+            queryset = queryset.filter(sku__spu__product_type=product_type)
+        if days:
+            days = int(days)
+            start_date = timezone.now() - timedelta(days=days)
+            queryset = queryset.filter(order__created_at__gte=start_date)
+
+        # 按SKU聚合数据
+        queryset = queryset.values(
+            'sku__sku_code',
+            'sku__sku_name',
+            'sku__spu__product_type',  # 通过SPU获取商品类型
+            'sku__img_url',  # 添加商品图片URL
+        ).annotate(
+            total_quantity=models.Sum('quantity'),
+            total_amount=models.Sum('total_price'),
+            avg_price=models.Avg('unit_price'),
+            order_count=models.Count('order', distinct=True),
+            shop_count=models.Count('order__shop', distinct=True),
+            last_sold=models.Max('order__created_at')
+        ).order_by('-total_amount')
+
+        # 处理图片URL
+        for item in queryset:
+            if item['sku__img_url']:
+                # 如果是相对路径，添加MEDIA_URL前缀
+                if not item['sku__img_url'].startswith(('http://', 'https://')):
+                    item['sku__img_url'] = settings.MEDIA_URL + item['sku__img_url']
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # 获取所有店铺
+        context['shops'] = Shop.objects.filter(status=1)
+        
+        # 获取商品类型选项
+        from gallery.models import SPU
+        context['product_types'] = SPU.PRODUCT_TYPE_CHOICES
+        
+        # 时间范围选项
+        context['date_ranges'] = [
+            {'days': 7, 'name': '7天'},
+            {'days': 14, 'name': '14天'},
+            {'days': 30, 'name': '30天'},
+            {'days': 90, 'name': '3个月'},
+        ]
+        
+        # 计算统计数据
+        sales_data = self.get_queryset()
+        context['total_quantity'] = sum(item['total_quantity'] for item in sales_data)
+        context['total_amount'] = sum(item['total_amount'] for item in sales_data)
+        context['sku_count'] = len(sales_data)  # SKU种类数
+        
+        # 计算订单总数
+        base_queryset = Cart.objects.filter(~Q(order__status='cancelled'))
+        if self.request.GET.get('shop'):
+            base_queryset = base_queryset.filter(order__shop_id=self.request.GET.get('shop'))
+        if self.request.GET.get('product_type'):
+            base_queryset = base_queryset.filter(sku__spu__product_type=self.request.GET.get('product_type'))
+        if self.request.GET.get('days'):
+            days = int(self.request.GET.get('days'))
+            start_date = timezone.now() - timedelta(days=days)
+            base_queryset = base_queryset.filter(order__created_at__gte=start_date)
+        context['total_orders'] = base_queryset.values('order').distinct().count()
+        
+        # 保存筛选条件
+        context['filters'] = {
+            'shop': self.request.GET.get('shop', ''),
+            'product_type': self.request.GET.get('product_type', ''),
+            'days': self.request.GET.get('days', ''),
+        }
+        
+        # 设置当前菜单
+        context['active_menu'] = 'trade'
+        context['active_submenu'] = 'sales_detail'
+        
+        return context
+
+@login_required
+def export_sales_detail(request):
+    """导出销售明细Excel"""
+    # 创建一个内存中的Excel文件
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output)
+    worksheet = workbook.add_worksheet('销售明细')
+
+    # 设置表头样式
+    header_format = workbook.add_format({
+        'bold': True,
+        'align': 'center',
+        'valign': 'vcenter',
+        'bg_color': '#F4F6F9',
+        'border': 1
+    })
+
+    # 设置单元格样式
+    cell_format = workbook.add_format({
+        'align': 'center',
+        'valign': 'vcenter',
+        'border': 1
+    })
+
+    # 设置数字格式
+    number_format = workbook.add_format({
+        'align': 'center',
+        'valign': 'vcenter',
+        'border': 1,
+        'num_format': '#,##0.00'
+    })
+
+    # 设置图片列宽和行高
+    worksheet.set_column('A:A', 15)  # 图片列宽
+    worksheet.set_default_row(45)    # 默认行高
+
+    # 写入表头
+    headers = [
+        '商品图片', 'SKU编码', '商品名称', '商品类型', '销售数量', 
+        '销售金额', '平均单价', '订单数', '店铺数', '最近销售'
+    ]
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header, header_format)
+
+    # 获取筛选条件
+    shop_id = request.GET.get('shop')
+    product_type = request.GET.get('product_type')
+    days = request.GET.get('days')
+
+    # 构建查询
+    queryset = Cart.objects.select_related(
+        'order', 'sku', 'order__shop', 'sku__spu'
+    ).filter(
+        ~Q(order__status='cancelled')
+    )
+
+    if shop_id:
+        queryset = queryset.filter(order__shop_id=shop_id)
+    if product_type:
+        queryset = queryset.filter(sku__spu__product_type=product_type)
+    if days:
+        days = int(days)
+        start_date = timezone.now() - timedelta(days=days)
+        queryset = queryset.filter(order__created_at__gte=start_date)
+
+    # 按SKU聚合数据
+    sales_data = queryset.values(
+        'sku__sku_code',
+        'sku__sku_name',
+        'sku__spu__product_type',
+        'sku__img_url',
+    ).annotate(
+        total_quantity=models.Sum('quantity'),
+        total_amount=models.Sum('total_price'),
+        avg_price=models.Avg('unit_price'),
+        order_count=models.Count('order', distinct=True),
+        shop_count=models.Count('order__shop', distinct=True),
+        last_sold=models.Max('order__created_at')
+    ).order_by('-total_amount')
+
+    # 获取商品类型选项字典
+    from gallery.models import SPU
+    product_types_dict = dict(SPU.PRODUCT_TYPE_CHOICES)
+
+    # 写入数据
+    import os
+    import requests
+    from urllib.parse import urlparse
+    from django.conf import settings
+
+    for row, item in enumerate(sales_data, start=1):
+        # 处理图片
+        if item['sku__img_url']:
+            img_url = item['sku__img_url']
+            if not img_url.startswith(('http://', 'https://')):
+                img_url = settings.MEDIA_URL.rstrip('/') + '/' + img_url.lstrip('/')
+                # 如果MEDIA_URL是相对路径，添加域名
+                if not img_url.startswith(('http://', 'https://')):
+                    img_url = request.build_absolute_uri(img_url)
+            
+            try:
+                # 下载图片
+                response = requests.get(img_url)
+                if response.status_code == 200:
+                    # 插入图片到Excel
+                    worksheet.insert_image(row, 0, 'image.png', {
+                        'image_data': BytesIO(response.content),
+                        'x_scale': 0.5,
+                        'y_scale': 0.5,
+                        'positioning': 1
+                    })
+            except Exception as e:
+                logger.error(f"下载图片失败: {str(e)}")
+
+        # 写入其他数据
+        worksheet.write(row, 1, item['sku__sku_code'], cell_format)
+        worksheet.write(row, 2, item['sku__sku_name'], cell_format)
+        worksheet.write(row, 3, product_types_dict.get(item['sku__spu__product_type'], '-'), cell_format)
+        worksheet.write(row, 4, item['total_quantity'], cell_format)
+        worksheet.write(row, 5, item['total_amount'], number_format)
+        worksheet.write(row, 6, item['avg_price'], number_format)
+        worksheet.write(row, 7, item['order_count'], cell_format)
+        worksheet.write(row, 8, item['shop_count'], cell_format)
+        worksheet.write(row, 9, item['last_sold'].strftime('%Y-%m-%d %H:%M'), cell_format)
+
+    workbook.close()
+    output.seek(0)
+
+    # 生成下载文件名
+    filename = f'销售明细_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+
+    response = HttpResponse(
+        output.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

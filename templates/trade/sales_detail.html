@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}销售明细{% endblock %}
+
+{% block extra_css %}
+<style>
+.hover-zoom-container {
+    position: fixed;
+    display: none;
+    z-index: 9999;
+    width: 240px;
+    height: 240px;
+    background-color: white;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    border-radius: 4px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    padding: 10px;
+}
+
+.sku-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    cursor: zoom-in;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl">
+    <!-- 筛选区 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <!-- 时间范围筛选 -->
+            <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
+                <div class="btn-group">
+                    <a href="?{% if filters.shop %}shop={{ filters.shop }}{% endif %}{% if filters.product_type %}&product_type={{ filters.product_type }}{% endif %}" 
+                       class="btn {% if not filters.days %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        全部时间
+                    </a>
+                    {% for range in date_ranges %}
+                    <a href="?days={{ range.days }}{% if filters.shop %}&shop={{ filters.shop }}{% endif %}{% if filters.product_type %}&product_type={{ filters.product_type }}{% endif %}" 
+                       class="btn {% if filters.days == range.days|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ range.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 商品类型筛选 -->
+            <div class="d-flex justify-content-start mb-2" style="overflow-x: auto;">
+                <div class="btn-group">
+                    <a href="?{% if filters.shop %}shop={{ filters.shop }}{% endif %}{% if filters.days %}&days={{ filters.days }}{% endif %}" 
+                       class="btn {% if not filters.product_type %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        全部类型
+                    </a>
+                    {% for type_code, type_name in product_types %}
+                    <a href="?product_type={{ type_code }}{% if filters.shop %}&shop={{ filters.shop }}{% endif %}{% if filters.days %}&days={{ filters.days }}{% endif %}" 
+                       class="btn {% if filters.product_type == type_code %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ type_name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 店铺筛选 -->
+            <div class="d-flex justify-content-start" style="overflow-x: auto;">
+                <div class="btn-group">
+                    <a href="?{% if filters.product_type %}product_type={{ filters.product_type }}{% endif %}{% if filters.days %}&days={{ filters.days }}{% endif %}" 
+                       class="btn {% if not filters.shop %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        全部店铺
+                    </a>
+                    {% for shop in shops %}
+                    <a href="?shop={{ shop.id }}{% if filters.product_type %}&product_type={{ filters.product_type }}{% endif %}{% if filters.days %}&days={{ filters.days }}{% endif %}" 
+                       class="btn {% if filters.shop == shop.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ shop.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 统计信息和导出按钮 -->
+    <div class="d-flex align-items-center mb-3">
+        <div class="row flex-grow-1 g-2">
+            <div class="col-sm-6 col-lg-2">
+                <div class="card card-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-azure text-white avatar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                        <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+                                        <rect x="9" y="3" width="6" height="4" rx="2" />
+                                        <line x1="9" y1="12" x2="9.01" y2="12" />
+                                        <line x1="13" y1="12" x2="15" y2="12" />
+                                        <line x1="9" y1="16" x2="9.01" y2="16" />
+                                        <line x1="13" y1="16" x2="15" y2="16" />
+                                    </svg>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium">订单数量</div>
+                                <div class="text-muted">{{ total_orders }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <div class="card card-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-primary text-white avatar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                        <path d="M16.7 8a3 3 0 0 0 -2.7 -2h-4a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 1 -2.7 -2"></path>
+                                        <path d="M12 3v3m0 12v3"></path>
+                                    </svg>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium">总销售额</div>
+                                <div class="text-muted">{{ total_amount|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <div class="card card-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-yellow text-white avatar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                        <path d="M13.5 21h-7.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v5" />
+                                        <path d="M16 3v4" />
+                                        <path d="M8 3v4" />
+                                        <path d="M4 11h16" />
+                                        <path d="M19 16l-2 3h4l-2 3" />
+                                    </svg>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium">SKU种类</div>
+                                <div class="text-muted">{{ sku_count }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <div class="card card-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <span class="bg-green text-white avatar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                        <path d="M4 7v-1a2 2 0 0 1 2 -2h2"></path>
+                                        <path d="M4 17v1a2 2 0 0 0 2 2h2"></path>
+                                        <path d="M16 4h2a2 2 0 0 1 2 2v1"></path>
+                                        <path d="M16 20h2a2 2 0 0 0 2 -2v-1"></path>
+                                        <path d="M4 12h16"></path>
+                                    </svg>
+                                </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium">总数量</div>
+                                <div class="text-muted">{{ total_quantity }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ms-3">
+            <a href="{% url 'trade:export_sales_detail' %}{% if filters %}?{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}{% endif %}" 
+               class="btn btn-success">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path>
+                    <path d="M7 11l5 5l5 -5"></path>
+                    <path d="M12 4l0 12"></path>
+                </svg>
+                导出Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- 销售明细表格 -->
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>商品图片</th>
+                        <th>SKU编码</th>
+                        <th>商品名称</th>
+                        <th>商品类型</th>
+                        <th>销售数量</th>
+                        <th>销售金额</th>
+                        <th>平均单价</th>
+                        <th>订单数</th>
+                        <th>店铺数</th>
+                        <th>最近销售</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sales %}
+                    <tr>
+                        <td class="w-1">
+                            {% if item.sku__img_url %}
+                            <img src="{{ item.sku__img_url|safe }}" alt="{{ item.sku__sku_name }}" class="sku-thumbnail" data-zoom-src="{{ item.sku__img_url|safe }}">
+                            {% else %}
+                            <span class="avatar avatar-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-photo" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                    <line x1="15" y1="8" x2="15.01" y2="8"></line>
+                                    <rect x="4" y="4" width="16" height="16" rx="3"></rect>
+                                    <path d="M4 15l4 -4a3 5 0 0 1 3 0l5 5"></path>
+                                    <path d="M14 14l1 -1a3 5 0 0 1 3 0l2 2"></path>
+                                </svg>
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.sku__sku_code }}</td>
+                        <td>{{ item.sku__sku_name }}</td>
+                        <td>
+                            {% for type_code, type_name in product_types %}
+                                {% if type_code == item.sku__spu__product_type %}
+                                    {{ type_name }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>{{ item.total_quantity }}</td>
+                        <td>{{ item.total_amount|floatformat:2 }}</td>
+                        <td>{{ item.avg_price|floatformat:2 }}</td>
+                        <td>{{ item.order_count }}</td>
+                        <td>{{ item.shop_count }}</td>
+                        <td>{{ item.last_sold|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center">暂无数据</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 分页 -->
+        {% if is_paginated %}
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-muted">
+                显示第 <span>{{ page_obj.start_index }}</span> 到 <span>{{ page_obj.end_index }}</span> 条，
+                共 <span>{{ paginator.count }}</span> 条
+            </p>
+            <ul class="pagination m-0 ms-auto">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in filters.items %}&{{ key }}={{ value }}{% endfor %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11 7l-5 5l5 5"/><path d="M17 7l-5 5l5 5"/></svg>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in filters.items %}&{{ key }}={{ value }}{% endfor %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 6l-6 6l6 6"/></svg>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in filters.items %}&{{ key }}={{ value }}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in filters.items %}&{{ key }}={{ value }}{% endfor %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6"/></svg>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ paginator.num_pages }}{% for key, value in filters.items %}&{{ key }}={{ value }}{% endfor %}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M13 7l5 5l-5 5"/><path d="M7 7l5 5l-5 5"/></svg>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Zoom container -->
+<div class="hover-zoom-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const zoomContainer = document.querySelector('.hover-zoom-container');
+    const thumbnails = document.querySelectorAll('.sku-thumbnail');
+
+    thumbnails.forEach(thumbnail => {
+        thumbnail.addEventListener('mouseover', function(e) {
+            const zoomSrc = this.getAttribute('data-zoom-src');
+            if (zoomSrc) {
+                zoomContainer.style.backgroundImage = `url(${zoomSrc})`;
+                zoomContainer.style.display = 'block';
+            }
+        });
+
+        thumbnail.addEventListener('mousemove', function(e) {
+            const x = e.clientX + 20;
+            const y = e.clientY + 20;
+            
+            // Ensure the zoom container stays within viewport
+            const container = zoomContainer.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            let left = x;
+            let top = y;
+            
+            if (x + container.width > viewportWidth) {
+                left = x - container.width - 40;
+            }
+            
+            if (y + container.height > viewportHeight) {
+                top = y - container.height - 40;
+            }
+            
+            zoomContainer.style.left = left + 'px';
+            zoomContainer.style.top = top + 'px';
+        });
+
+        thumbnail.addEventListener('mouseout', function() {
+            zoomContainer.style.display = 'none';
+        });
+    });
+});
+</script>
+{% endblock %} 

@@ -15,4 +15,6 @@ urlpatterns = [
     # 同步订单
     path('orders/sync/', views.sync_orders, name='order_sync'),
     path('report/', views.report, name='report'),
+    path('sales-detail/', views.SalesDetailView.as_view(), name='sales_detail'),
+    path('sales-detail/export/', views.export_sales_detail, name='export_sales_detail'),
 ] 

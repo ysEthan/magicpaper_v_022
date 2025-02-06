@@ -6,6 +6,8 @@ pymysql
 cryptography
 pandas
 requests
+xlsxwriter
+django-sslserver
 
 
 

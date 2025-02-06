@@ -18,7 +18,7 @@ from trade.services import WDTOrderSync
 from django.contrib import messages
 from django.shortcuts import redirect
 import uuid
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpResponse, HttpRequest
 import random  # 添加random模块导入
 from django.urls import reverse_lazy, reverse
 
@@ -770,3 +770,34 @@ def guest_order_query(request):
         'active_menu': 'page',
         'active_submenu': 'guest_order_query'
     })
+
+def verify_callback(request: HttpRequest):
+    """验证回调"""
+    # 打印请求数据
+    print("\n=== 回调请求数据 ===")
+
+    # 获取 challenge 参数
+    challenge = request.GET.get('challenge')
+
+    if challenge:
+        # 原样返回 challenge 参数的值
+        return HttpResponse(challenge)
+    return HttpResponse('Invalid request', status=400)
+
+def redbook_callback(request: HttpRequest):
+    """小红书API授权回调处理"""
+    # 获取授权码
+    code = request.GET.get('code')
+    
+    if not code:
+        return HttpResponse('Missing code parameter', status=400)
+    
+    # 打印接收到的授权码
+    print("\n=== 小红书授权回调 ===")
+    print(f"Received authorization code: {code}")
+    
+    # TODO: 这里可以添加后续的授权码处理逻辑
+    # 例如：使用code换取access token等
+    
+    # 返回成功响应
+    return HttpResponse('Authorization successful')
